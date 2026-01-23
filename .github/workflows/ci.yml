@@ -57,11 +57,4 @@ jobs:
           exit 1
 
       - name: Build & Test
-        env:
-          DB_URL: jdbc:mysql://localhost:3306/moayo_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-          DB_USER: test
-          DB_PW: testpw
-
-          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
-        # --debug 또는 --info를 붙이면 상세한 접속 실패 로그가 나옵니다.
-        run: ./gradlew clean build --info
+        run: ./gradlew clean build
