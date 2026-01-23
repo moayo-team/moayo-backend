@@ -63,4 +63,5 @@ jobs:
           DB_PW: testpw
 
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
-        run: ./gradlew clean build
+        # --debug 또는 --info를 붙이면 상세한 접속 실패 로그가 나옵니다.
+        run: ./gradlew clean build --info
