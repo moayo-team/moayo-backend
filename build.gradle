@@ -40,10 +40,3 @@ tasks.named('test') {
     systemProperty 'spring.profiles.active', 'test'
 }
 
-sourceSets {
-    test {
-        resources {
-            srcDir 'src/test/resources'
-        }
-    }
-}
