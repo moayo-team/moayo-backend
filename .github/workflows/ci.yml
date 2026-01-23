@@ -32,3 +32,9 @@ jobs:
       # 테스트 시에는 무조건 application-test.yml(H2 설정)을 사용하게 강제합니다.
       - name: Build & Test
         run: ./gradlew clean build -Dspring.profiles.active=test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          DB_URL: jdbc:h2:mem:testdb;MODE=MySQL
+          DB_USERNAME: sa
+          DB_PASSWORD: ""
+          DB_DRIVER: org.h2.Driver
