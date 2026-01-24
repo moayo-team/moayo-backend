@@ -1,7 +1,7 @@
-package com.moayo.moayobackend.repository;
+package com.moayo.moayobackend.post.repository;
 
-import com.moayo.moayobackend.entity.Category;
-import com.moayo.moayobackend.entity.Post;
+import com.moayo.moayobackend.post.entity.Category;
+import com.moayo.moayobackend.post.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

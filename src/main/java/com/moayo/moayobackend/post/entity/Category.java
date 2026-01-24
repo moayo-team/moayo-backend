@@ -1,4 +1,4 @@
-package com.moayo.moayobackend.entity;
+package com.moayo.moayobackend.post.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

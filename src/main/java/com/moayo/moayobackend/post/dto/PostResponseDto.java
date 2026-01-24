@@ -1,6 +1,6 @@
-package com.moayo.moayobackend.dto;
+package com.moayo.moayobackend.post.dto;
 
-import com.moayo.moayobackend.entity.Post;
+import com.moayo.moayobackend.post.entity.Post;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
