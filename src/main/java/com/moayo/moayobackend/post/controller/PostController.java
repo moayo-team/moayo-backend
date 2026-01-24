@@ -1,9 +1,9 @@
-package com.moayo.moayobackend.controller;
+package com.moayo.moayobackend.post.controller;
 
-import com.moayo.moayobackend.entity.Category;
-import com.moayo.moayobackend.entity.Post;
-import com.moayo.moayobackend.dto.PostResponseDto;
-import com.moayo.moayobackend.service.PostService;
+import com.moayo.moayobackend.post.entity.Category;
+import com.moayo.moayobackend.post.entity.Post;
+import com.moayo.moayobackend.post.dto.PostResponseDto;
+import com.moayo.moayobackend.post.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
