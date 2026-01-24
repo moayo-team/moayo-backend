@@ -1,4 +1,15 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.response;
 
-public class ExperienceDetailResponse {
-}
+import java.time.LocalDate;
+
+public record ExperienceDetailResponse(
+        Long experienceId,
+        String title,
+        String organization,
+        LocalDate startDate,
+        LocalDate endDate,
+        String activity,
+        String role,
+        String summary,
+        Boolean visible
+) {}

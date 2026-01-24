@@ -1,4 +1,5 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.request;
 
-public class ExperienceVisibilityRequest {
-}
+public record ExperienceVisibilityRequest(
+        Boolean visible
+) {}

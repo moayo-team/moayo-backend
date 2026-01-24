@@ -1,4 +1,13 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.request;
 
-public class ExperienceUpdateRequest {
-}
+import java.time.LocalDate;
+
+public record ExperienceUpdateRequest(
+        String title,
+        String organization,
+        LocalDate startDate,
+        LocalDate endDate,
+        String activity,
+        String role,
+        String summary
+) {}

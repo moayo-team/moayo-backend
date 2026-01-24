@@ -1,4 +1,6 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.request;
 
-public class AttachFileRequest {
-}
+public record AttachFileRequest(
+        Long fileId,
+        String fileName
+) {}

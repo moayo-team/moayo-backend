@@ -1,4 +1,13 @@
-package com.moayo.moayobackend.experience.dto.request;
+package com.moayo.moayobackend.experience.dto.response;
 
-public class ExperienceAiDraftResponse {
-}
+import java.time.LocalDate;
+
+public record ExperienceAiDraftResponse(
+        String organization,
+        String title,
+        String activity,
+        String role,
+        String summary,
+        LocalDate startDate,
+        LocalDate endDate
+) {}

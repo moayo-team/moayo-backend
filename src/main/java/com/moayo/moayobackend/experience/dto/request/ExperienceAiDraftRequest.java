@@ -1,4 +1,5 @@
 package com.moayo.moayobackend.experience.dto.request;
 
-public class ExperienceAiDraftRequest {
-}
+public record ExperienceAiDraftRequest(
+        String prompt
+) {}

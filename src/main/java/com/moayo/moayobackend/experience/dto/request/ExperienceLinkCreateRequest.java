@@ -1,4 +1,6 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.request;
 
-public class ExperienceLinkCreateRequest {
-}
+public record ExperienceLinkCreateRequest(
+        String title,
+        String url
+) {}

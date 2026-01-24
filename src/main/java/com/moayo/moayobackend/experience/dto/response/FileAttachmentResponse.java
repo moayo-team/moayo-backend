@@ -1,4 +1,6 @@
-package com.moayo.moayobackend.experience.dto;
+package com.moayo.moayobackend.experience.dto.response;
 
-public class FileAttachmentResponse {
-}
+public record FileAttachmentResponse(
+        Long fileId,
+        String fileName
+) {}
