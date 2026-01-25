@@ -1,4 +1,4 @@
 package com.moayo.moayobackend.auth.dto;
 
-public class TokenResponseDto {
-}
+// refresh로 acess 재발급 응답
+public record TokenResponseDto(String accessToken) {}
