@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface ExperienceLinkRepository extends JpaRepository<ExperienceLink, Long> {
 
-    List<ExperienceLink> findAllByExperienceIdOrderByIdDesc(Long experienceId);
+    List<ExperienceLink> findAllByExperience_IdOrderByCreatedAtDesc(Long experienceId);
 
-    Optional<ExperienceLink> findByIdAndExperienceId(Long id, Long experienceId);
+    Optional<ExperienceLink> findByIdAndExperience_Id(Long id, Long experienceId);
 }
