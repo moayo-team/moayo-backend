@@ -1,9 +1,9 @@
 package com.moayo.moayobackend.experience.service;
 
 import com.moayo.moayobackend.experience.dto.request.AttachFileRequest;
+import com.moayo.moayobackend.experience.dto.response.FileAttachmentResponse;
 import com.moayo.moayobackend.experience.entity.Experience;
 import com.moayo.moayobackend.experience.entity.ExperienceFile;
-import com.moayo.moayobackend.experience.dto.response.FileAttachmentResponse;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,36 +20,38 @@ public class ExperienceAttachmentService {
     private final ExperienceFileRepository fileRepository;
 
     @Transactional
-    public void attachFile(Long memberId, Long experienceId, AttachFileRequest req) {
+    public void attachFile(Long userId, Long experienceId, AttachFileRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        if (req.fileId() == null) throw new IllegalArgumentException("fileId is required");
+        if (req == null || req.fileId() == null) {
+            throw new IllegalArgumentException("fileId is required");
+        }
 
-        boolean exists = fileRepository.existsByExperienceIdAndFileId(experienceId, req.fileId());
-        if (exists) return; // 중복 첨부 방지(원하면 예외로 바꿔도 됨)
+        boolean exists = fileRepository.existsByExperience_IdAndFileId(experienceId, req.fileId());
+        if (exists) return;
 
-        fileRepository.save(new ExperienceFile(experienceId, req.fileId(), req.fileName()));
+        fileRepository.save(new ExperienceFile(e, req.fileId(), req.fileName()));
     }
 
     @Transactional(readOnly = true)
-    public List<FileAttachmentResponse> listFiles(Long memberId, Long experienceId) {
+    public List<FileAttachmentResponse> listFiles(Long userId, Long experienceId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        return fileRepository.findAllByExperienceIdOrderByIdDesc(experienceId).stream()
+        return fileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId).stream()
                 .map(f -> new FileAttachmentResponse(f.getFileId(), f.getFileName()))
                 .toList();
     }
 
     @Transactional
-    public void detachFile(Long memberId, Long experienceId, Long fileId) {
+    public void detachFile(Long userId, Long experienceId, Long fileId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        fileRepository.deleteByExperienceIdAndFileId(experienceId, fileId);
+        fileRepository.deleteByExperience_IdAndFileId(experienceId, fileId);
     }
 }

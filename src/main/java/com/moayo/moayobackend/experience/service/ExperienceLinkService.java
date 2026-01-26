@@ -1,10 +1,10 @@
 package com.moayo.moayobackend.experience.service;
 
-import com.moayo.moayobackend.experience.entity.Experience;
-import com.moayo.moayobackend.experience.entity.ExperienceLink;
 import com.moayo.moayobackend.experience.dto.request.ExperienceLinkCreateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceLinkUpdateRequest;
 import com.moayo.moayobackend.experience.dto.response.ExperienceLinkResponse;
+import com.moayo.moayobackend.experience.entity.Experience;
+import com.moayo.moayobackend.experience.entity.ExperienceLink;
 import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,44 +21,44 @@ public class ExperienceLinkService {
     private final ExperienceLinkRepository linkRepository;
 
     @Transactional
-    public void create(Long memberId, Long experienceId, ExperienceLinkCreateRequest req) {
+    public void create(Long userId, Long experienceId, ExperienceLinkCreateRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        linkRepository.save(new ExperienceLink(experienceId, req.title(), req.url()));
+        linkRepository.save(new ExperienceLink(e, req.title(), req.url()));
     }
 
     @Transactional(readOnly = true)
-    public List<ExperienceLinkResponse> list(Long memberId, Long experienceId) {
+    public List<ExperienceLinkResponse> list(Long userId, Long experienceId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        return linkRepository.findAllByExperienceIdOrderByIdDesc(experienceId).stream()
+        return linkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId).stream()
                 .map(l -> new ExperienceLinkResponse(l.getId(), l.getTitle(), l.getUrl()))
                 .toList();
     }
 
     @Transactional
-    public void update(Long memberId, Long experienceId, Long linkId, ExperienceLinkUpdateRequest req) {
+    public void update(Long userId, Long experienceId, Long linkId, ExperienceLinkUpdateRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        ExperienceLink link = linkRepository.findByIdAndExperienceId(linkId, experienceId)
+        ExperienceLink link = linkRepository.findByIdAndExperience_Id(linkId, experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Link not found"));
 
         link.update(req.title(), req.url());
     }
 
     @Transactional
-    public void delete(Long memberId, Long experienceId, Long linkId) {
+    public void delete(Long userId, Long experienceId, Long linkId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        ExperienceLink link = linkRepository.findByIdAndExperienceId(linkId, experienceId)
+        ExperienceLink link = linkRepository.findByIdAndExperience_Id(linkId, experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Link not found"));
 
         linkRepository.delete(link);

@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface ExperienceFileRepository extends JpaRepository<ExperienceFile, Long> {
 
-    List<ExperienceFile> findAllByExperienceIdOrderByIdDesc(Long experienceId);
+    List<ExperienceFile> findAllByExperience_IdOrderByCreatedAtDesc(Long experienceId);
 
-    void deleteByExperienceIdAndFileId(Long experienceId, Long fileId);
+    boolean existsByExperience_IdAndFileId(Long experienceId, Long fileId);
 
-    boolean existsByExperienceIdAndFileId(Long experienceId, Long fileId);
+    void deleteByExperience_IdAndFileId(Long experienceId, Long fileId);
 }

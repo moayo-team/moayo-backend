@@ -1,49 +1,52 @@
 package com.moayo.moayobackend.experience.controller;
 
-import com.moayo.moayobackend.experience.service.ExperienceAttachmentService;
 import com.moayo.moayobackend.experience.dto.request.AttachFileRequest;
 import com.moayo.moayobackend.experience.dto.response.FileAttachmentResponse;
+import com.moayo.moayobackend.experience.service.ExperienceAttachmentService;
+import com.moayo.moayobackend.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/experiences/{experienceId}/attachments/files")
+@RequestMapping("/api/experiences/{experienceId}/attachments/files")
 public class ExperienceAttachmentController {
 
     private final ExperienceAttachmentService attachmentService;
 
-    // 파일 첨부(연결) - fileId를 받아 experience에 연결
+    // 파일 첨부(연결)
     @PostMapping
-    public ResponseEntity<Void> attachFile(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    public ResponseEntity<ApiResponse<Void>> attachFile(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId,
             @RequestBody AttachFileRequest req
     ) {
-        attachmentService.attachFile(memberId, experienceId, req);
-        return ResponseEntity.noContent().build();
+        attachmentService.attachFile(userId, experienceId, req);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "파일 첨부 성공", null));
     }
 
-    // 첨부된 파일 목록 조회
+    // 첨부 파일 목록
     @GetMapping
-    public ResponseEntity<List<FileAttachmentResponse>> listFiles(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    public ResponseEntity<ApiResponse<List<FileAttachmentResponse>>> listFiles(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId
     ) {
-        return ResponseEntity.ok(attachmentService.listFiles(memberId, experienceId));
+        var result = attachmentService.listFiles(userId, experienceId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "첨부 파일 목록 조회 성공", result));
     }
 
     // 첨부 파일 삭제(연결 해제)
     @DeleteMapping("/{fileId}")
-    public ResponseEntity<Void> detachFile(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    public ResponseEntity<ApiResponse<Void>> detachFile(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId,
             @PathVariable Long fileId
     ) {
-        attachmentService.detachFile(memberId, experienceId, fileId);
-        return ResponseEntity.noContent().build();
+        attachmentService.detachFile(userId, experienceId, fileId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "첨부 파일 삭제 성공", null));
     }
 }

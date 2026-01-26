@@ -1,5 +1,6 @@
 package com.moayo.moayobackend.experience.entity;
 
+import com.moayo.moayobackend.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,19 +11,22 @@ import static lombok.AccessLevel.PROTECTED;
 @Getter
 @NoArgsConstructor(access = PROTECTED)
 @Table(name = "experience_file")
-public class ExperienceFile {
+public class ExperienceFile extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long experienceId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "experience_id", nullable = false)
+    private Experience experience;
 
+    @Column(nullable = false)
     private Long fileId;
 
     private String fileName;
 
-    public ExperienceFile(Long experienceId, Long fileId, String fileName) {
-        this.experienceId = experienceId;
+    public ExperienceFile(Experience experience, Long fileId, String fileName) {
+        this.experience = experience;
         this.fileId = fileId;
         this.fileName = fileName;
     }
