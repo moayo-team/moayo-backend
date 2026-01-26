@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,29 +23,35 @@ public class PostController {
 
     private final PostService postService;
 
-    // 모집글 리스트 조회
+    // 1. 모집글 리스트 조회
     @GetMapping
     public ResponseEntity<Page<PostResponseDto>> getAllPosts(
+            @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Category category,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(postService.getPosts(category, pageable));
+        return ResponseEntity.ok(postService.getPosts(userId, category, pageable));
     }
 
-    // 모집글 상세 정보 조회
+    // 2. 모집글 상세 정보 조회
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponseDto> getPostDetail(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getPostDetail(postId));
+    public ResponseEntity<PostResponseDto> getPostDetail(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId) {
+        return ResponseEntity.ok(postService.getPostDetail(userId, postId));
     }
 
-    // 새 모집글 등록
+    // 3. 새 모집글 등록
     @PostMapping
-    public ResponseEntity<Long> create(@Valid @RequestBody Post post) {
-        return ResponseEntity.ok(postService.createPost(post));
+    public ResponseEntity<Long> create(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody Post post) {
+        return ResponseEntity.ok(postService.createPost(userId, post));
     }
 
-    // 내 게시글 수정
+    // 4. 내 게시글 수정
     @PatchMapping("/{postId}")
     public ResponseEntity<Void> update(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long postId,
             @RequestParam String title,
             @RequestParam String content,
@@ -53,22 +60,24 @@ public class PostController {
             @RequestParam String role,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate deadline) {
 
-        postService.updatePost(postId, title, content, category, role, count, deadline);
+        postService.updatePost(userId, postId, title, content, category, role, count, deadline);
         return ResponseEntity.ok().build();
     }
 
-    // 내 게시글 삭제
+    // 5. 내 게시글 삭제
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> delete(@PathVariable Long postId) {
-        postService.deletePost(postId);
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId) {
+        postService.deletePost(userId, postId);
         return ResponseEntity.noContent().build();
     }
 
-    // 내 게시글 모아보기
+    // 6. 내 게시글 모아보기
     @GetMapping("/me")
     public ResponseEntity<Page<PostResponseDto>> getMyPosts(
-            @RequestParam String nickname,
+            @AuthenticationPrincipal Long userId,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyPosts(nickname, pageable));
+        return ResponseEntity.ok(postService.getMyPosts(userId, pageable));
     }
 }
