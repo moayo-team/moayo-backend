@@ -35,6 +35,7 @@ public class Post {
     private Integer totalCount;
     private LocalDate deadline;
 
+    private Long authorId;
     private String authorNickname;
     private String profileImageUrl = "default_url";
 
