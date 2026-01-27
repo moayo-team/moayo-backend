@@ -18,7 +18,7 @@ public record ProfileIndexItemCreateRequest(
         String indexKey,
 
         @Schema(description = "항목 내용 (오른쪽 영역, 최대 20자)", example = "ENTP")
-        @NotBlank(message = "indexValue는 필수입니다.")
+//        @NotBlank(message = "indexValue는 필수입니다.")
         @Size(max = 20, message = "indexValue는 최대 20자입니다.")
         String indexValue,
 

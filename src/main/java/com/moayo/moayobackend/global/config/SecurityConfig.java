@@ -30,12 +30,15 @@ public class SecurityConfig {
                               "/api/v1/auth/**",      // 소셜 로그인 시작, 콜백, 토큰 재발급 등
                                 "/swagger-ui/**",       // 스웨거 UI
                                 "/v3/api-docs/**",      // 스웨거 문서 데이터
-                                "/ws-chat/**"           // WebSocket 핸드셰이크 허용
-
+                                "/ws-chat/**",           // WebSocket 핸드셰이크 허용
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthFilter(jwtProvider), SecurityContextHolderFilter.class)
+                .addFilterBefore(
+                        new JwtAuthFilter(jwtProvider),
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                )
                 .build();
     }
 }

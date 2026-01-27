@@ -102,7 +102,14 @@ public class AuthController {
                     .maxAge(0)
                     .build();
             res.addHeader("Set-Cookie", deleteState.toString());
-            return new RedirectView(frontRedirectUrl);
+
+            // Access Token 생성
+            String access = jwtProvider.createAccessToken(user.getId());
+
+            // URL에 Access Token을 쿼리 스트링으로 붙여서 리다이렉트
+            String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access;
+
+            return new RedirectView(redirectUrlWithToken);
         } catch (Exception e) {
             e.printStackTrace();
             return new RedirectView(frontRedirectUrl + "?error=server_error");

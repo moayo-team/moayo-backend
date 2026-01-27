@@ -31,6 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
+        System.out.println(">>> Swagger에서 넘어온 Header: [" + header + "]");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
