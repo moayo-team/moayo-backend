@@ -73,6 +73,7 @@ public class GoogleOAuthService {
         if (token == null || token.accessToken() == null) {
             throw new IllegalStateException("구글 토큰 교환 실패");
         }
+        System.out.println("### Google AccessToken: " + token.accessToken());
 
         GoogleUserInfoResponseDto userInfo = webClient.get()
                 .uri("https://openidconnect.googleapis.com/v1/userinfo")

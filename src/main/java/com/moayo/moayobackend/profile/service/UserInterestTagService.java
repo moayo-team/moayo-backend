@@ -1,39 +1,64 @@
 package com.moayo.moayobackend.profile.service;
 
-import com.moayo.moayobackend.profile.dto.response.UserInterestTagResponse;
+import com.moayo.moayobackend.global.exception.BusinessException;
+import com.moayo.moayobackend.global.exception.GeneralErrorCode;
+import com.moayo.moayobackend.profile.dto.response.InterestTagResponse;
 import com.moayo.moayobackend.profile.entity.UserInterestTag;
+import com.moayo.moayobackend.profile.exception.ProfileErrorCode;
+import com.moayo.moayobackend.profile.repository.InterestTagRepository;
 import com.moayo.moayobackend.profile.repository.UserInterestTagRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/*
+ UserInterestTagService
+ - 내 관심태그 조회/저장(전체 교체) 로직
+ - 태그는 사전 정의 목록만 허용
+*/
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserInterestTagService {
 
     private final UserInterestTagRepository userInterestTagRepository;
-    private final InterestTagService interestTagService;
+    private final InterestTagRepository interestTagRepository;
 
-    public List<UserInterestTagResponse> findMine(Long userId) {
-        return userInterestTagRepository.findByUserId(userId)
-                .stream()
-                .map(uit -> new UserInterestTagResponse(uit.getId(), uit.getInterestTagId()))
+    public List<InterestTagResponse> findMine(Long userId) {
+        // 1. 내가 가진 태그 ID 리스트 뽑기
+        List<Long> tagIds = userInterestTagRepository.findAllByUserId(userId).stream()
+                .map(UserInterestTag::getInterestTagId)
+                .toList();
+
+        // 2. ID 리스트로 마스터 테이블에서 한 번에 조회합니다.
+        return interestTagRepository.findAllById(tagIds).stream()
+                .map(InterestTagResponse::from)
                 .toList();
     }
 
-    // 태그 개수 제한 없음. 요청 값으로 전체 교체
+    @Transactional
     public void replace(Long userId, List<Long> tagIds) {
-        if (tagIds == null) tagIds = List.of();
-
-        // 유효성 검증
-        interestTagService.validateAllExist(tagIds);
-
-        userInterestTagRepository.deleteByUserId(userId);
-        for (Long tagId : tagIds) {
-            userInterestTagRepository.save(UserInterestTag.create(userId, tagId));
+        if (userId == null) {
+        throw new BusinessException(GeneralErrorCode.UNAUTHORIZED);
+    }
+        if (tagIds == null) {
+            throw new BusinessException(ProfileErrorCode.TAG_NOT_FOUND, "tagIds는 필수입니다.");
         }
+
+        for (Long id : tagIds) {
+            if (id == null || !interestTagRepository.existsById(id)) {
+                throw new BusinessException(ProfileErrorCode.TAG_NOT_FOUND);
+            }
+        }
+
+        userInterestTagRepository.deleteAllByUserId(userId);
+
+        List<UserInterestTag> toSave = tagIds.stream()
+                .distinct()
+                .map(tagId -> new UserInterestTag(userId, tagId))
+                .toList();
+
+        userInterestTagRepository.saveAll(toSave);
     }
 }

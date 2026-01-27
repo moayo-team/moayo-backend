@@ -36,9 +36,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             try {
                 Claims c = jwtProvider.parse(token);
+                System.out.println(">>> 파싱된 Claims: " + c);
 
                 if ("access".equals(c.get("typ"))) {
                     Long userId = Long.valueOf(c.getSubject());
+                    System.out.println(">>> 인증 성공! userId: " + userId);
 
                     var auth = new UsernamePasswordAuthenticationToken(
                             userId,
@@ -47,10 +49,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(auth);
+                } else {
+                    System.out.println(">>> typ 클레임이 'access'가 아닙니다: " + c.get("typ"));
                 }
-            } catch (Exception ignored) {
-                // 토큰 이상이면 인증 없이 통과 -> 보호 API에서 401 처리
+            } catch (Exception e) {
+                System.out.println(">>> JWT 인증 에러 발생: " + e.getMessage());
             }
+        } else {
+            System.out.println(">>> Authorization 헤더가 없거나 형식이 올바르지 않습니다.");
         }
 
         chain.doFilter(request, response);

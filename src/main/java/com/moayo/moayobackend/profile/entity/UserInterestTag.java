@@ -1,18 +1,23 @@
 package com.moayo.moayobackend.profile.entity;
 
+import com.moayo.moayobackend.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
+import java.time.OffsetDateTime;
+
+/*
+ UserInterestTag
+ - 유저가 선택한 관심태그 매핑 테이블
+ - 태그 개수 제한 없음
+*/
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-        name = "user_interest_tags",
-        uniqueConstraints = @UniqueConstraint(name = "uk_user_interest_tags", columnNames = {"user_id", "interest_tag_id"})
-)
-public class UserInterestTag {
+@NoArgsConstructor
+@Entity
+@Table(name = "user_interest_tags",
+        uniqueConstraints = @UniqueConstraint(name = "uk_user_interest_tags", columnNames = {"user_id", "interest_tag_id"}))
+public class UserInterestTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,10 +29,8 @@ public class UserInterestTag {
     @Column(name="interest_tag_id", nullable = false)
     private Long interestTagId;
 
-    public static UserInterestTag create(Long userId, Long tagId) {
-        UserInterestTag u = new UserInterestTag();
-        u.userId = userId;
-        u.interestTagId = tagId;
-        return u;
+    public UserInterestTag(Long userId, Long interestTagId) {
+        this.userId = userId;
+        this.interestTagId = interestTagId;
     }
 }

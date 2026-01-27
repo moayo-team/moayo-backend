@@ -1,27 +1,35 @@
 package com.moayo.moayobackend.profile.entity;
 
+import com.moayo.moayobackend.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
+import java.time.OffsetDateTime;
+
+/*
+ Profile
+ - users 1:1 프로필 엔티티
+ - 기능명세: bio/university/major는 필수 (비우면 오류)
+*/
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "profiles")
-public class Profile {
+@NoArgsConstructor
+@Entity
+@Table(name = "profiles",
+        uniqueConstraints = @UniqueConstraint(name = "uk_profiles_user_id", columnNames = {"user_id"}))
+public class Profile extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
+    @Column(name="user_id", nullable = false, unique = true)
     private Long userId;
 
-    @Column(name = "image_url")
+    @Column(name="image_url")
     private String imageUrl;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(nullable = false, length = 500)
     private String bio;
 
     @Column(nullable = false, length = 100)
@@ -30,20 +38,18 @@ public class Profile {
     @Column(nullable = false, length = 100)
     private String major;
 
-    public static Profile create(Long userId, String bio, String university, String major, String imageUrl) {
-        Profile p = new Profile();
-        p.userId = userId;
-        p.bio = bio;
-        p.university = university;
-        p.major = major;
-        p.imageUrl = imageUrl;
-        return p;
+    public Profile(Long userId, String imageUrl, String bio, String university, String major) {
+        this.userId = userId;
+        this.imageUrl = imageUrl;
+        this.bio = bio;
+        this.university = university;
+        this.major = major;
     }
 
-    public void update(String bio, String university, String major, String imageUrl) {
+    public void update(String imageUrl, String bio, String university, String major) {
+        if (imageUrl != null) this.imageUrl = imageUrl;
         if (bio != null) this.bio = bio;
         if (university != null) this.university = university;
         if (major != null) this.major = major;
-        if (imageUrl != null) this.imageUrl = imageUrl;
     }
 }

@@ -1,12 +1,18 @@
 package com.moayo.moayobackend.profile.service;
 
 import com.moayo.moayobackend.profile.dto.response.InterestTagResponse;
+import com.moayo.moayobackend.profile.entity.InterestTag;
 import com.moayo.moayobackend.profile.repository.InterestTagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/*
+ InterestTagService
+ - 관심태그 마스터 목록 조회 로직
+*/
 @Service
 @RequiredArgsConstructor
 public class InterestTagService {
@@ -14,19 +20,20 @@ public class InterestTagService {
     private final InterestTagRepository interestTagRepository;
 
     public List<InterestTagResponse> findAll() {
-        return interestTagRepository.findAll()
-                .stream()
-                .map(t -> new InterestTagResponse(t.getId(), t.getName()))
+        return interestTagRepository.findAll().stream()
+                .map(InterestTagResponse::from)
                 .toList();
     }
 
-    // 존재하지 않는 태그 id가 들어오면 막음 (사전정의 정책 유지)
-    public void validateAllExist(List<Long> tagIds) {
-        if (tagIds == null) return;
-        for (Long id : tagIds) {
-            if (id == null || !interestTagRepository.existsById(id)) {
-                throw new IllegalArgumentException("유효하지 않은 관심 태그 id가 포함되어 있습니다.");
-            }
+    @Transactional
+    public InterestTagResponse create(String name) {
+        // 이미 존재하는 태그인지 체크 (선택 사항)
+        if (interestTagRepository.existsByName(name)) {
+            throw new IllegalArgumentException("이미 존재하는 태그입니다.");
         }
+
+        InterestTag tag = new InterestTag(name); // 엔티티 생성자 필요
+        InterestTag saved = interestTagRepository.save(tag);
+        return InterestTagResponse.from(saved);
     }
 }

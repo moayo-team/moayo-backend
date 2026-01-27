@@ -1,133 +1,132 @@
 package com.moayo.moayobackend.profile.service;
 
+import com.moayo.moayobackend.global.exception.BusinessException;
+import com.moayo.moayobackend.global.exception.GeneralErrorCode;
 import com.moayo.moayobackend.profile.dto.request.ProfileIndexItemCreateRequest;
 import com.moayo.moayobackend.profile.dto.request.ProfileIndexItemUpdateRequest;
 import com.moayo.moayobackend.profile.dto.response.ProfileIndexItemResponse;
+import com.moayo.moayobackend.profile.entity.Profile;
 import com.moayo.moayobackend.profile.entity.ProfileIndexItem;
+import com.moayo.moayobackend.profile.exception.ProfileErrorCode;
 import com.moayo.moayobackend.profile.repository.ProfileIndexItemRepository;
-import jakarta.transaction.Transactional;
+import com.moayo.moayobackend.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ProfileIndexItemService {
 
-    private final ProfileService profileService;
+    private final ProfileRepository profileRepository;
     private final ProfileIndexItemRepository profileIndexItemRepository;
 
-    public void create(Long userId, ProfileIndexItemCreateRequest req) {
-        Long profileId = profileService.getMyProfileId(userId);
-
-        // 캡쳐 API 범위 기준: index-items 개수 제한은 강제하지 않음
-        validateCommon(req.indexKey(), req.indexValue(), req.itemType());
-        validateItemType(req.itemType(), req.textValue(), req.linkUrl(), req.fileUrl());
-
-        ProfileIndexItem item = ProfileIndexItem.create(
-                profileId,
-                req.indexKey(),
-                req.indexValue(),
-                req.itemType(),
-                req.textValue(),
-                req.linkUrl(),
-                req.fileUrl(),
-                req.fileName(),
-                req.fileType(),
-                req.fileSize()
-        );
-        profileIndexItemRepository.save(item);
-    }
+    // 파일 저장 경로 (아까 생성한 폴더 위치)
+    private final String uploadDir = "C:/Project_BSH/moayo-backend/uploads/";
 
     public List<ProfileIndexItemResponse> findMine(Long userId) {
-        Long profileId = profileService.getMyProfileId(userId);
-        return profileIndexItemRepository.findByProfileId(profileId)
-                .stream()
-                .map(this::toResponse)
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
+
+        return profileIndexItemRepository.findAllByProfileIdOrderByIdAsc(profile.getId()).stream()
+                .map(ProfileIndexItemResponse::from)
                 .toList();
     }
 
-    public void update(Long userId, Long itemId, ProfileIndexItemUpdateRequest req) {
-        Long profileId = profileService.getMyProfileId(userId);
+    @Transactional
+    public void create(Long userId, ProfileIndexItemCreateRequest req, MultipartFile file) {
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
 
-        // 내 소유 item인지 검증
-        ProfileIndexItem item = profileIndexItemRepository.findByIdAndProfileId(itemId, profileId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 추가 항목이 존재하지 않습니다."));
+        // 1. 최대 4개 제한 체크
+        long count = profileIndexItemRepository.countByProfileId(profile.getId());
+        if (count >= 4) {
+            throw new BusinessException(ProfileErrorCode.INDEX_ITEM_LIMIT_EXCEEDED);
+        }
 
-        // 업데이트 후의 최종값을 기준으로 타입 검증
-        String finalItemType = (req.itemType() != null) ? req.itemType() : item.getItemType();
-        String finalTextValue = (req.textValue() != null) ? req.textValue() : item.getTextValue();
-        String finalLinkUrl = (req.linkUrl() != null) ? req.linkUrl() : item.getLinkUrl();
-        String finalFileUrl = (req.fileUrl() != null) ? req.fileUrl() : item.getFileUrl();
+        String finalLinkUrl = req.linkUrl();
 
-        if (req.indexKey() != null && isBlank(req.indexKey())) throw new IllegalArgumentException("indexKey는 비울 수 없습니다.");
-        if (req.indexValue() != null && isBlank(req.indexValue())) throw new IllegalArgumentException("indexValue는 비울 수 없습니다.");
-        if (req.itemType() != null && isBlank(req.itemType())) throw new IllegalArgumentException("itemType은 비울 수 없습니다.");
+        // 2. 타입별 유효성 검사 및 파일 처리
+        if (req.itemType() == ProfileIndexItem.ItemType.text) {
+            if (req.textValue() == null || req.textValue().isBlank()) {
+                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "text 타입은 textValue가 필요합니다.");
+            }
+        } else if (req.itemType() == ProfileIndexItem.ItemType.link) {
+            if (req.linkUrl() == null || req.linkUrl().isBlank()) {
+                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "link 타입은 linkUrl이 필요합니다.");
+            }
+        } else if (req.itemType() == ProfileIndexItem.ItemType.file) {
+            if (file == null || file.isEmpty()) {
+                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "file 타입은 실제 파일 첨부가 필요합니다.");
+            }
+            finalLinkUrl = saveFile(file); // 파일 저장 후 경로 반환
+        }
 
-        validateItemType(finalItemType, finalTextValue, finalLinkUrl, finalFileUrl);
-
-        item.update(
+        ProfileIndexItem item = new ProfileIndexItem(
+                profile.getId(),
                 req.indexKey(),
                 req.indexValue(),
                 req.itemType(),
                 req.textValue(),
-                req.linkUrl(),
-                req.fileUrl(),
-                req.fileName(),
-                req.fileType(),
-                req.fileSize()
+                finalLinkUrl
         );
+
+        profileIndexItemRepository.save(item);
     }
 
-    public void delete(Long userId, Long itemId) {
-        Long profileId = profileService.getMyProfileId(userId);
+    @Transactional
+    public void update(Long userId, Long itemId, ProfileIndexItemUpdateRequest req, MultipartFile file) {
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
 
-        ProfileIndexItem item = profileIndexItemRepository.findByIdAndProfileId(itemId, profileId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 추가 항목이 존재하지 않습니다."));
+        ProfileIndexItem item = profileIndexItemRepository.findById(itemId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
+
+        if (!item.getProfileId().equals(profile.getId())) {
+            throw new BusinessException(GeneralErrorCode.FORBIDDEN);
+        }
+
+        String updatedLinkUrl = req.linkUrl();
+
+        // 수정한 항목이 파일 타입이고, 새로운 파일이 들어온 경우 교체
+        if (item.getItemType() == ProfileIndexItem.ItemType.file && file != null && !file.isEmpty()) {
+            updatedLinkUrl = saveFile(file);
+        }
+
+        item.update(req.indexKey(), req.indexValue(), req.textValue(), updatedLinkUrl);
+    }
+
+    @Transactional
+    public void delete(Long userId, Long itemId) {
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
+
+        ProfileIndexItem item = profileIndexItemRepository.findById(itemId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
+
+        if (!item.getProfileId().equals(profile.getId())) {
+            throw new BusinessException(GeneralErrorCode.FORBIDDEN);
+        }
 
         profileIndexItemRepository.delete(item);
     }
 
-    private ProfileIndexItemResponse toResponse(ProfileIndexItem i) {
-        return new ProfileIndexItemResponse(
-                i.getId(),
-                i.getProfileId(),
-                i.getIndexKey(),
-                i.getIndexValue(),
-                i.getItemType(),
-                i.getTextValue(),
-                i.getLinkUrl(),
-                i.getFileUrl(),
-                i.getFileName(),
-                i.getFileType(),
-                i.getFileSize()
-        );
-    }
-
-    private void validateCommon(String indexKey, String indexValue, String itemType) {
-        if (isBlank(indexKey)) throw new IllegalArgumentException("indexKey는 필수입니다.");
-        if (isBlank(indexValue)) throw new IllegalArgumentException("indexValue는 필수입니다.");
-        if (isBlank(itemType)) throw new IllegalArgumentException("itemType은 필수입니다.");
-    }
-
-    private void validateItemType(String itemType, String textValue, String linkUrl, String fileUrl) {
-        switch (itemType) {
-            case "text" -> {
-                if (isBlank(textValue)) throw new IllegalArgumentException("text 타입은 textValue가 필수입니다.");
-            }
-            case "link" -> {
-                if (isBlank(linkUrl)) throw new IllegalArgumentException("link 타입은 linkUrl이 필수입니다.");
-            }
-            case "file" -> {
-                if (isBlank(fileUrl)) throw new IllegalArgumentException("file 타입은 fileUrl이 필수입니다.");
-            }
-            default -> throw new IllegalArgumentException("itemType은 file/link/text 중 하나여야 합니다.");
+    // 로컬 폴더에 파일을 저장하는 헬퍼 메서드
+    private String saveFile(MultipartFile file) {
+        try {
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            File targetFile = new File(uploadDir + fileName);
+            file.transferTo(targetFile);
+            return "/uploads/" + fileName; // DB에 저장될 경로
+        } catch (IOException e) {
+            throw new BusinessException(GeneralErrorCode.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다.");
         }
-    }
-
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
     }
 }

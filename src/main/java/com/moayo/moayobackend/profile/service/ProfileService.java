@@ -1,68 +1,125 @@
 package com.moayo.moayobackend.profile.service;
 
+import com.moayo.moayobackend.global.exception.BusinessException;
+import com.moayo.moayobackend.global.exception.GeneralErrorCode;
 import com.moayo.moayobackend.profile.dto.request.ProfileCreateRequest;
 import com.moayo.moayobackend.profile.dto.request.ProfileUpdateRequest;
+import com.moayo.moayobackend.profile.dto.response.ProfileDocumentResponse;
+import com.moayo.moayobackend.profile.dto.response.ProfileIndexItemResponse;
 import com.moayo.moayobackend.profile.dto.response.ProfileMeResponse;
 import com.moayo.moayobackend.profile.dto.response.ProfileUserResponse;
+import com.moayo.moayobackend.profile.dto.response.InterestTagResponse;
 import com.moayo.moayobackend.profile.entity.Profile;
+import com.moayo.moayobackend.profile.exception.ProfileErrorCode;
 import com.moayo.moayobackend.profile.repository.ProfileRepository;
-import jakarta.transaction.Transactional;
+import com.moayo.moayobackend.user.entity.User;
+import com.moayo.moayobackend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+/*
+ ProfileService
+ - 프로필 화면 진입 응답 조립
+ - 프로필 생성/수정 시 users + profiles를 함께 업데이트
+*/
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ProfileService {
 
+    private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
 
-    public ProfileMeResponse getMyProfile(Long userId) {
-        Profile p = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다."));
-        return new ProfileMeResponse(p.getId(), p.getUserId(), p.getImageUrl(), p.getBio(), p.getUniversity(), p.getMajor());
+    private final UserInterestTagService userInterestTagService;
+    private final ProfileIndexItemService profileIndexItemService;
+    private final ProfileDocumentService profileDocumentService;
+
+    public ProfileMeResponse getMe(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
+
+        Profile profile = profileRepository.findByUserId(userId).orElse(null);
+
+        List<InterestTagResponse> tags = userInterestTagService.findMine(userId);
+
+        List<ProfileIndexItemResponse> items = (profile == null)
+                ? List.of()
+                : profileIndexItemService.findMine(userId);
+
+        List<ProfileDocumentResponse> docs = (profile == null)
+                ? List.of()
+                : profileDocumentService.list(userId);
+
+        ProfileMeResponse.UserPart userPart = new ProfileMeResponse.UserPart(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhoneNumber()
+        );
+
+        ProfileMeResponse.ProfilePart profilePart = (profile == null)
+                ? new ProfileMeResponse.ProfilePart(null, null, null, null, null)
+                : new ProfileMeResponse.ProfilePart(
+                profile.getId(),
+                profile.getImageUrl(),
+                profile.getUniversity(),
+                profile.getMajor(),
+                profile.getBio()
+        );
+
+        return new ProfileMeResponse(userPart, profilePart, tags, items, docs);
     }
 
-    public ProfileUserResponse getOtherProfile(Long userId) {
-        Profile p = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다."));
-        return new ProfileUserResponse(p.getId(), p.getUserId(), p.getImageUrl(), p.getBio(), p.getUniversity(), p.getMajor());
+    public ProfileUserResponse getUser(Long targetUserId) {
+        User user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
+
+        Profile profile = profileRepository.findByUserId(targetUserId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
+
+        List<InterestTagResponse> tags = userInterestTagService.findMine(targetUserId);
+        List<ProfileIndexItemResponse> items = profileIndexItemService.findMine(targetUserId);
+
+        return new ProfileUserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                profile.getImageUrl(),
+                profile.getUniversity(),
+                profile.getMajor(),
+                profile.getBio(),
+                tags,
+                items
+        );
     }
 
-    // 생성은 1회만 허용
+    @Transactional
     public void create(Long userId, ProfileCreateRequest req) {
-        if (profileRepository.existsByUserId(userId)) {
-            throw new IllegalStateException("이미 프로필이 존재합니다.");
-        }
-        // ERD 정책: bio/university/major는 필수. 여기서는 단순 검증(팀 예외처리 규칙 맞추면 커스텀 예외로 교체)
-        if (isBlank(req.bio()) || isBlank(req.university()) || isBlank(req.major())) {
-            throw new IllegalArgumentException("bio/university/major는 필수입니다.");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
+
+        if (profileRepository.findByUserId(userId).isPresent()) {
+            throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "이미 프로필이 존재합니다.");
         }
 
-        Profile p = Profile.create(userId, req.bio(), req.university(), req.major(), req.imageUrl());
-        profileRepository.save(p);
+        user.updateBasics(req.name(), req.phoneNumber());
+
+        Profile profile = new Profile(userId, req.imageUrl(), req.bio(), req.university(), req.major());
+        profileRepository.save(profile);
     }
 
-    // 부분 수정
+    @Transactional
     public void update(Long userId, ProfileUpdateRequest req) {
-        Profile p = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(GeneralErrorCode.NOT_FOUND));
 
-        // 필수 필드 정책을 유지하려면, 들어온 값이 빈 문자열이면 막는 게 안전
-        if (req.bio() != null && isBlank(req.bio())) throw new IllegalArgumentException("bio는 비울 수 없습니다.");
-        if (req.university() != null && isBlank(req.university())) throw new IllegalArgumentException("university는 비울 수 없습니다.");
-        if (req.major() != null && isBlank(req.major())) throw new IllegalArgumentException("major는 비울 수 없습니다.");
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
 
-        p.update(req.bio(), req.university(), req.major(), req.imageUrl());
-    }
-
-    public Long getMyProfileId(Long userId) {
-        return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다."))
-                .getId();
-    }
-
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
+        user.updateBasics(req.name(), req.phoneNumber());
+        profile.update(req.imageUrl(), req.bio(), req.university(), req.major());
     }
 }
