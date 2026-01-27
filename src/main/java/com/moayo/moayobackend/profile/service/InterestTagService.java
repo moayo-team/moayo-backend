@@ -27,12 +27,11 @@ public class InterestTagService {
 
     @Transactional
     public InterestTagResponse create(String name) {
-        // 이미 존재하는 태그인지 체크 (선택 사항)
         if (interestTagRepository.existsByName(name)) {
             throw new IllegalArgumentException("이미 존재하는 태그입니다.");
         }
 
-        InterestTag tag = new InterestTag(name); // 엔티티 생성자 필요
+        InterestTag tag = new InterestTag(name);
         InterestTag saved = interestTagRepository.save(tag);
         return InterestTagResponse.from(saved);
     }

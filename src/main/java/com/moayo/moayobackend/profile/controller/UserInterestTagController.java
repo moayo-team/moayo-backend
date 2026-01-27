@@ -27,7 +27,6 @@ public class UserInterestTagController {
     @Operation(summary = "내 관심 태그 조회", description = "내가 저장했던 관심 태그 목록 조회")
     @GetMapping
     public ApiResponse<?> getMine(@AuthenticationPrincipal Long userId) {
-//        Long targetId = (userId != null) ? userId : 1L;
         return ApiResponse.ok("SUCCESS", "내 관심 태그 조회에 성공했습니다.", userInterestTagService.findMine(userId));
     }
 
@@ -37,7 +36,6 @@ public class UserInterestTagController {
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody UserInterestTagUpdateRequest req
     ) {
-//        Long targetId = (userId != null) ? userId : 1L;
         System.out.println(">>> 현재 로그인된 유저 ID: " + userId);
 
         userInterestTagService.replace(userId, req.tagIds());

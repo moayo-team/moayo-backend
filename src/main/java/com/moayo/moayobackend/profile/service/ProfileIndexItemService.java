@@ -13,11 +13,11 @@ import com.moayo.moayobackend.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,9 +28,9 @@ public class ProfileIndexItemService {
     private final ProfileRepository profileRepository;
     private final ProfileIndexItemRepository profileIndexItemRepository;
 
-    // 파일 저장 경로 (아까 생성한 폴더 위치)
     private final String uploadDir = "C:/Project_BSH/moayo-backend/uploads/";
 
+    @Transactional(readOnly = true)
     public List<ProfileIndexItemResponse> findMine(Long userId) {
         Profile profile = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
@@ -45,37 +45,28 @@ public class ProfileIndexItemService {
         Profile profile = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_NOT_FOUND));
 
-        // 1. 최대 4개 제한 체크
-        long count = profileIndexItemRepository.countByProfileId(profile.getId());
-        if (count >= 4) {
-            throw new BusinessException(ProfileErrorCode.INDEX_ITEM_LIMIT_EXCEEDED);
-        }
+        String processedValue = req.indexValue();
+        String processedLink = req.linkUrl();
 
-        String finalLinkUrl = req.linkUrl();
+        validateData(req.itemType(), req.indexKey(), processedValue, processedLink, file);
 
-        // 2. 타입별 유효성 검사 및 파일 처리
-        if (req.itemType() == ProfileIndexItem.ItemType.text) {
-            if (req.textValue() == null || req.textValue().isBlank()) {
-                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "text 타입은 textValue가 필요합니다.");
+        if (req.itemType() == ProfileIndexItem.ItemType.file) {
+            processedLink = saveFile(file);
+            if (!StringUtils.hasText(processedValue)) {
+                processedValue = file.getOriginalFilename(); // 파일명이 제목 미입력 시 원본파일명 사용
             }
         } else if (req.itemType() == ProfileIndexItem.ItemType.link) {
-            if (req.linkUrl() == null || req.linkUrl().isBlank()) {
-                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "link 타입은 linkUrl이 필요합니다.");
+            if (!StringUtils.hasText(processedValue)) {
+                processedValue = processedLink;
             }
-        } else if (req.itemType() == ProfileIndexItem.ItemType.file) {
-            if (file == null || file.isEmpty()) {
-                throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "file 타입은 실제 파일 첨부가 필요합니다.");
-            }
-            finalLinkUrl = saveFile(file); // 파일 저장 후 경로 반환
         }
 
         ProfileIndexItem item = new ProfileIndexItem(
                 profile.getId(),
                 req.indexKey(),
-                req.indexValue(),
+                (processedValue != null) ? processedValue : "",
                 req.itemType(),
-                req.textValue(),
-                finalLinkUrl
+                processedLink
         );
 
         profileIndexItemRepository.save(item);
@@ -93,14 +84,22 @@ public class ProfileIndexItemService {
             throw new BusinessException(GeneralErrorCode.FORBIDDEN);
         }
 
-        String updatedLinkUrl = req.linkUrl();
+        String updatedLink = req.linkUrl();
+        String updatedValue = req.indexValue();
 
-        // 수정한 항목이 파일 타입이고, 새로운 파일이 들어온 경우 교체
-        if (item.getItemType() == ProfileIndexItem.ItemType.file && file != null && !file.isEmpty()) {
-            updatedLinkUrl = saveFile(file);
+        if (req.itemType() == ProfileIndexItem.ItemType.file && file != null && !file.isEmpty()) {
+            updatedLink = saveFile(file);
+            if (!StringUtils.hasText(updatedValue)) {
+                updatedValue = file.getOriginalFilename();
+            }
+        }
+        else if (req.itemType() == ProfileIndexItem.ItemType.link) {
+            if (!StringUtils.hasText(updatedValue)) {
+                updatedValue = updatedLink;
+            }
         }
 
-        item.update(req.indexKey(), req.indexValue(), req.textValue(), updatedLinkUrl);
+        item.update(req.indexKey(), updatedValue, req.itemType(), updatedLink);
     }
 
     @Transactional
@@ -118,13 +117,41 @@ public class ProfileIndexItemService {
         profileIndexItemRepository.delete(item);
     }
 
-    // 로컬 폴더에 파일을 저장하는 헬퍼 메서드
+    private void validateData(ProfileIndexItem.ItemType type, String key, String value, String link, MultipartFile file) {
+        if (!StringUtils.hasText(key)) {
+            throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "제목은 필수 입력 사항입니다.");
+        }
+
+        switch (type) {
+            case text -> {
+                if (!StringUtils.hasText(value)) {
+                    throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "내용을 입력해주세요.");
+                }
+            }
+            case link -> {
+                if (!StringUtils.hasText(link)) {
+                    throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "링크 주소를 입력해주세요.");
+                }
+            }
+            case file -> {
+                if (file == null || file.isEmpty()) {
+                    throw new BusinessException(GeneralErrorCode.BAD_REQUEST, "파일을 첨부해주세요.");
+                }
+            }
+        }
+    }
+
     private String saveFile(MultipartFile file) {
         try {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             File targetFile = new File(uploadDir + fileName);
+
+            if (!targetFile.getParentFile().exists()) {
+                targetFile.getParentFile().mkdirs();
+            }
+
             file.transferTo(targetFile);
-            return "/uploads/" + fileName; // DB에 저장될 경로
+            return "/uploads/" + fileName;
         } catch (IOException e) {
             throw new BusinessException(GeneralErrorCode.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다.");
         }

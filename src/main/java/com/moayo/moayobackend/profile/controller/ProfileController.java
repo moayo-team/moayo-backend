@@ -29,7 +29,6 @@ public class ProfileController {
     @Operation(summary = "내 프로필 조회", description = "로그인한 사용자의 프로필 기본 정보를 조회합니다.")
     @GetMapping("/me")
     public ApiResponse<?> getMe(@AuthenticationPrincipal Long userId) {
-//        Long targetId = (userId != null) ? userId : 1L;
         return ApiResponse.ok("SUCCESS", "내 프로필 조회에 성공했습니다.", profileService.getMe(userId));
     }
 
@@ -39,7 +38,6 @@ public class ProfileController {
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ProfileCreateRequest req
     ) {
-//        Long targetId = (userId != null) ? userId : 1L;
         profileService.create(userId, req);
         return ApiResponse.ok("SUCCESS", "프로필 생성에 성공했습니다.", null);
     }
@@ -50,7 +48,6 @@ public class ProfileController {
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ProfileUpdateRequest req
     ) {
-//        Long targetId = (userId != null) ? userId : 1L;
         profileService.update(userId, req);
         return ApiResponse.ok("SUCCESS", "프로필 수정에 성공했습니다.", null);
     }
@@ -58,7 +55,6 @@ public class ProfileController {
     @Operation(summary = "타인 프로필 조회", description = "다른 사용자의 프로필을 조회합니다.")
     @GetMapping("/{userId}")
     public ApiResponse<?> getUser(@PathVariable Long userId) {
-//        Long targetId = (userId != null) ? userId : 1L;
         return ApiResponse.ok("SUCCESS", "타인 프로필 조회에 성공했습니다.", profileService.getUser(userId));
     }
 }
