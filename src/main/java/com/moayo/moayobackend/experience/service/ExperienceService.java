@@ -1,13 +1,13 @@
 package com.moayo.moayobackend.experience.service;
 
 import com.moayo.moayobackend.experience.dto.request.ExperienceAiDraftRequest;
-import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
-import com.moayo.moayobackend.experience.entity.Experience;
 import com.moayo.moayobackend.experience.dto.request.ExperienceCreateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceUpdateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceVisibilityRequest;
+import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceDetailResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceSummaryResponse;
+import com.moayo.moayobackend.experience.entity.Experience;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
@@ -27,8 +27,8 @@ public class ExperienceService {
     private final ExperienceLinkRepository experienceLinkRepository;
 
     @Transactional(readOnly = true)
-    public List<ExperienceSummaryResponse> listMyExperiences(Long memberId) {
-        return experienceRepository.findAllByMemberIdOrderByIdDesc(memberId).stream()
+    public List<ExperienceSummaryResponse> listMyExperiences(Long userId) {
+        return experienceRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(e -> new ExperienceSummaryResponse(
                         e.getId(),
                         e.getOrganization(),
@@ -43,9 +43,9 @@ public class ExperienceService {
     }
 
     @Transactional
-    public Long create(Long memberId, ExperienceCreateRequest req) {
+    public Long create(Long userId, ExperienceCreateRequest req) {
         Experience e = new Experience(
-                memberId,
+                userId,
                 req.organization(),
                 req.title(),
                 req.activity(),
@@ -59,10 +59,10 @@ public class ExperienceService {
     }
 
     @Transactional(readOnly = true)
-    public ExperienceDetailResponse getMyDetail(Long memberId, Long experienceId) {
+    public ExperienceDetailResponse getMyDetail(Long userId, Long experienceId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
         return new ExperienceDetailResponse(
                 e.getId(),
@@ -78,10 +78,10 @@ public class ExperienceService {
     }
 
     @Transactional
-    public void update(Long memberId, Long experienceId, ExperienceUpdateRequest req) {
+    public void update(Long userId, Long experienceId, ExperienceUpdateRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
         e.applyPatch(
                 req.organization(),
@@ -95,26 +95,27 @@ public class ExperienceService {
     }
 
     @Transactional
-    public void delete(Long memberId, Long experienceId) {
+    public void delete(Long userId, Long experienceId) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
-        experienceRepository.deleteById(experienceId);
+        experienceRepository.delete(e);
     }
 
     @Transactional
-    public void changeVisibility(Long memberId, Long experienceId, ExperienceVisibilityRequest req) {
+    public void changeVisibility(Long userId, Long experienceId, ExperienceVisibilityRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
         e.changeVisibility(req.visible());
     }
 
+    // 타인(프로필) 공개 이력 조회
     @Transactional(readOnly = true)
     public List<ExperienceSummaryResponse> listPublicByUser(Long userId) {
-        return experienceRepository.findAllByMemberIdAndVisibleTrueOrderByIdDesc(userId).stream()
+        return experienceRepository.findAllByUserIdAndVisibleTrueOrderByCreatedAtDesc(userId).stream()
                 .map(e -> new ExperienceSummaryResponse(
                         e.getId(),
                         e.getOrganization(),
@@ -129,14 +130,14 @@ public class ExperienceService {
     }
 
     @Transactional(readOnly = true)
-    public ExperienceAiDraftResponse draftWithAi(Long memberId, Long experienceId, ExperienceAiDraftRequest req) {
+    public ExperienceAiDraftResponse draftWithAi(Long userId, Long experienceId, ExperienceAiDraftRequest req) {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(memberId);
+        e.validateOwner(userId);
 
         // 첨부파일, 링크를 context로 합쳐 AI 품질 올리기
-        var files = experienceFileRepository.findAllByExperienceIdOrderByIdDesc(experienceId);
-        var links = experienceLinkRepository.findAllByExperienceIdOrderByIdDesc(experienceId);
+        var files = experienceFileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
+        var links = experienceLinkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
 
         String context = buildContext(e, files, links);
         String prompt = (req == null || req.prompt() == null) ? "" : req.prompt();

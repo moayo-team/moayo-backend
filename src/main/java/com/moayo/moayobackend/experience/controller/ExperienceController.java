@@ -1,100 +1,107 @@
 package com.moayo.moayobackend.experience.controller;
 
 import com.moayo.moayobackend.experience.dto.request.ExperienceAiDraftRequest;
-import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
-import com.moayo.moayobackend.experience.service.ExperienceService;
 import com.moayo.moayobackend.experience.dto.request.ExperienceCreateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceUpdateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceVisibilityRequest;
+import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceDetailResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceSummaryResponse;
+import com.moayo.moayobackend.experience.service.ExperienceService;
+import com.moayo.moayobackend.global.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/experiences")
 public class ExperienceController {
 
     private final ExperienceService experienceService;
 
-    // 내 이력 목록 조회 (카드 리스트)
-    @GetMapping("/experiences")
-    public ResponseEntity<List<ExperienceSummaryResponse>> listMyExperiences(
-            @RequestHeader("X-MEMBER-ID") Long memberId
+    // 1) 내 이력 목록
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<ExperienceSummaryResponse>>> myList(
+            @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(experienceService.listMyExperiences(memberId));
+        var result = experienceService.listMyExperiences(userId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "내 이력 목록 조회 성공", result));
     }
 
-    // 이력 생성 (이력 추가 페이지 등록하기)
-    @PostMapping("/experiences")
-    public ResponseEntity<Void> create(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
-            @RequestBody ExperienceCreateRequest req
-    ) {
-        Long id = experienceService.create(memberId, req);
-        return ResponseEntity.created(URI.create("/api/v1/experiences/" + id)).build();
-    }
-
-    // 이력 상세 조회 (카드 클릭 -> 팝업 열기)
-    @GetMapping("/experiences/{experienceId}")
-    public ResponseEntity<ExperienceDetailResponse> getDetail(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    // 2) 내 이력 상세
+    @GetMapping("/me/{experienceId}")
+    public ResponseEntity<ApiResponse<ExperienceDetailResponse>> myDetail(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId
     ) {
-        return ResponseEntity.ok(experienceService.getMyDetail(memberId, experienceId));
+        var result = experienceService.getMyDetail(userId, experienceId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "내 이력 상세 조회 성공", result));
     }
 
-    // 이력 수정 저장 (수정 페이지 저장하기)
-    @PatchMapping("/experiences/{experienceId}")
-    public ResponseEntity<Void> update(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    // 3) 이력 생성
+    @PostMapping
+    public ResponseEntity<ApiResponse<Long>> create(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody ExperienceCreateRequest req
+    ) {
+        Long id = experienceService.create(userId, req);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "이력 생성 성공", id));
+    }
+
+    // 4) 이력 수정
+    @PatchMapping("/{experienceId}")
+    public ResponseEntity<ApiResponse<Void>> update(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId,
             @RequestBody ExperienceUpdateRequest req
     ) {
-        experienceService.update(memberId, experienceId, req);
-        return ResponseEntity.noContent().build();
+        experienceService.update(userId, experienceId, req);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "이력 수정 성공", null));
     }
 
-    // 이력 삭제 (팝업에서 삭제하기)
-    @DeleteMapping("/experiences/{experienceId}")
-    public ResponseEntity<Void> delete(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    // 5) 이력 삭제
+    @DeleteMapping("/{experienceId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId
     ) {
-        experienceService.delete(memberId, experienceId);
-        return ResponseEntity.noContent().build();
+        experienceService.delete(userId, experienceId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "이력 삭제 성공", null));
     }
 
-    // 이력 공개/비공개 토글
-    @PatchMapping("/experiences/{experienceId}/visibility")
-    public ResponseEntity<Void> changeVisibility(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    // 6) 공개/비공개 변경
+    @PatchMapping("/{experienceId}/visibility")
+    public ResponseEntity<ApiResponse<Void>> changeVisibility(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId,
             @RequestBody ExperienceVisibilityRequest req
     ) {
-        experienceService.changeVisibility(memberId, experienceId, req);
-        return ResponseEntity.noContent().build();
+        experienceService.changeVisibility(userId, experienceId, req);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "공개 여부 변경 성공", null));
     }
 
-    // 타인 프로필: 공개 이력만 조회
-    @GetMapping("/users/{userId}/experiences")
-    public ResponseEntity<List<ExperienceSummaryResponse>> listPublicByUser(
-            @PathVariable Long userId
+    // 7) 타인 공개 이력 보기 (프로필 조회용)
+    @GetMapping("/public/{targetUserId}")
+    public ResponseEntity<ApiResponse<List<ExperienceSummaryResponse>>> publicList(
+            @PathVariable Long targetUserId
     ) {
-        return ResponseEntity.ok(experienceService.listPublicByUser(userId));
+        var result = experienceService.listPublicByUser(targetUserId);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "공개 이력 조회 성공", result));
     }
 
+    // 8) AI draft
     @PostMapping("/{experienceId}/ai/draft")
-    public ResponseEntity<ExperienceAiDraftResponse> draftWithAi(
-            @RequestHeader("X-MEMBER-ID") Long memberId,
+    public ResponseEntity<ApiResponse<ExperienceAiDraftResponse>> draftWithAi(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long experienceId,
             @RequestBody(required = false) ExperienceAiDraftRequest req
     ) {
-        return ResponseEntity.ok(experienceService.draftWithAi(memberId, experienceId, req));
+        var result = experienceService.draftWithAi(userId, experienceId, req);
+        return ResponseEntity.ok(ApiResponse.ok("SUCCESS-200", "AI draft 생성 성공", result));
     }
 }
