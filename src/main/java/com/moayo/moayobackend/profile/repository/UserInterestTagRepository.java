@@ -14,7 +14,7 @@ import java.util.List;
 public interface UserInterestTagRepository extends JpaRepository<UserInterestTag, Long> {
     List<UserInterestTag> findAllByUserId(Long userId);
 
-    @Modifying // 이게 없으면 500 에러가 발생합니다!
+    @Modifying
     @Query("delete from UserInterestTag u where u.userId = :userId")
     void deleteAllByUserId(Long userId);
 }

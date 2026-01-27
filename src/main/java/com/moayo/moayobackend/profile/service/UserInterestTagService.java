@@ -26,12 +26,10 @@ public class UserInterestTagService {
     private final InterestTagRepository interestTagRepository;
 
     public List<InterestTagResponse> findMine(Long userId) {
-        // 1. 내가 가진 태그 ID 리스트 뽑기
         List<Long> tagIds = userInterestTagRepository.findAllByUserId(userId).stream()
                 .map(UserInterestTag::getInterestTagId)
                 .toList();
 
-        // 2. ID 리스트로 마스터 테이블에서 한 번에 조회합니다.
         return interestTagRepository.findAllById(tagIds).stream()
                 .map(InterestTagResponse::from)
                 .toList();

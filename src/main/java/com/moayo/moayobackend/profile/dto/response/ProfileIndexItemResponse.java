@@ -11,7 +11,6 @@ public record ProfileIndexItemResponse(
         String indexKey,
         String indexValue,
         String itemType,
-        String textValue,
         String linkUrl
 ) {
     public static ProfileIndexItemResponse from(ProfileIndexItem e) {
@@ -20,7 +19,6 @@ public record ProfileIndexItemResponse(
                 e.getIndexKey(),
                 e.getIndexValue(),
                 e.getItemType().name(),
-                e.getTextValue(),
                 e.getLinkUrl()
         );
     }

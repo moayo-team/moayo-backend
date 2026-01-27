@@ -27,7 +27,6 @@ public class ProfileDocumentController {
     @Operation(summary = "첨부파일 목록 조회", description = "내가 등록한 첨부파일 목록을 조회합니다.")
     @GetMapping
     public ApiResponse<?> list(@AuthenticationPrincipal Long userId) {
-//        Long targetId = (userId != null) ? userId : 1L;
         return ApiResponse.ok("SUCCESS", "첨부 파일 목록 조회에 성공했습니다.", profileDocumentService.list(userId));
     }
 
@@ -37,7 +36,6 @@ public class ProfileDocumentController {
             @AuthenticationPrincipal Long userId,
             @RequestPart("file") MultipartFile file
     ) {
-//        Long targetId = (userId != null) ? userId : 1L;
         ProfileDocumentResponse res = profileDocumentService.upload(userId, file);
         return ApiResponse.ok("SUCCESS", "첨부 파일 업로드에 성공했습니다.", res);
     }
@@ -48,7 +46,6 @@ public class ProfileDocumentController {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long documentId
     ) {
-//        Long targetId = (userId != null) ? userId : 1L;
         profileDocumentService.delete(userId, documentId);
         return ApiResponse.ok("SUCCESS", "학력 첨부 삭제에 성공했습니다.", null);
     }
