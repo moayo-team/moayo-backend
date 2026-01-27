@@ -34,8 +34,8 @@ app:
   jwt:
     issuer: "moayo"
     secret: ${JWT_SECRET:very_long_dummy_secret_key_for_build_success}
-    access-token-ttl-seconds: 900        # 15분
-    refresh-token-ttl-seconds: 1209600   # 14일
+    access-token-ttl-seconds: 2592000
+    refresh-token-ttl-seconds: 1209600
 
   front:
     redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173}

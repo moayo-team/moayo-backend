@@ -23,21 +23,22 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // CorsConfigurationSource Bean 사용
+                .cors(cors -> {})
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**",      // 소셜 로그인 시작, 콜백, 토큰 재발급 등
+                              "/api/v1/auth/**",      // 소셜 로그인 시작, 콜백, 토큰 재발급 등
                                 "/swagger-ui/**",       // 스웨거 UI
                                 "/v3/api-docs/**",      // 스웨거 문서 데이터
-                                "/ws-chat/**"           // WebSocket 핸드셰이크 허용
+                                "/ws-chat/**",           // WebSocket 핸드셰이크 허용
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-//                .oauth2Login(oauth2 -> oauth2
-//                        .defaultSuccessUrl("/api/v1/auth/oauth/google/success", true)
-//                )
-                .addFilterBefore(new JwtAuthFilter(jwtProvider), SecurityContextHolderFilter.class)
+                .addFilterBefore(
+                        new JwtAuthFilter(jwtProvider),
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                )
                 .build();
     }
 }

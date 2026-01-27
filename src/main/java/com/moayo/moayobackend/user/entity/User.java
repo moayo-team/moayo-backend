@@ -2,54 +2,67 @@ package com.moayo.moayobackend.user.entity;
 
 import com.moayo.moayobackend.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import static lombok.AccessLevel.PROTECTED;
-
-@Entity
+/*
+ User
+ - BaseEntity 상속: 생성/수정 시간 자동 관리
+ - 로그인(OAuth) 기반 사용자 엔티티
+*/
 @Getter
-@NoArgsConstructor(access = PROTECTED)
-@Table(
-        name = "users",
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_oauth", columnNames = {"oauth_provider", "oauth_sub"})
-        },
-        indexes = {
-                @Index(name = "idx_users_oauth", columnList = "oauth_provider, oauth_sub")
-        }
-)
-public class User extends BaseEntity {
+                @UniqueConstraint(name = "uk_users_oauth", columnNames = {"oauth_provider", "oauth_sub"}),
+                @UniqueConstraint(name = "uk_users_email", columnNames = {"email"})
+        })
+public class User extends BaseEntity { // BaseEntity 상속
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "oauth_provider", nullable = false)
-    private String oauthProvider; // google
+    @Column(name="oauth_provider", nullable = false, length = 20)
+    private String oauthProvider;
 
-    @Column(name = "oauth_sub", nullable = false)
-    private String oauthSub; // Google sub
+    @Column(name="oauth_sub", nullable = false, length = 100)
+    private String oauthSub;
 
-    @Column(nullable = false, unique = true)
-    private String email; // ERD: 구글 이메일 unique
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 6)
     private String name;
 
-    @Column(name = "phone_number")
-    private String phoneNumber; // 선택
+    @Column(name="phone_number", length = 11)
+    private String phoneNumber;
 
-    public static User createGoogleUser(String oauthSub, String email, String name) {
-        User u = new User();
-        u.oauthProvider = "google";
-        u.oauthSub = oauthSub;
-        u.email = email;
-        u.name = (name == null || name.isBlank()) ? email : name;
-        return u;
+    // createdAt, updatedAt 필드는 BaseEntity에서 관리하므로 삭제했습니다.
+
+    // 서비스에서 사용하는 구글 사용자 생성 메서드
+    public static User createGoogleUser(String sub, String email, String name) {
+        User user = new User();
+        user.oauthProvider = "google";
+        user.oauthSub = sub;
+        user.email = email;
+        // 이름 길이 예외 방지를 위해 6자 제한 (필요시 DB 길이를 늘리세요)
+        user.name = (name != null && name.length() > 6) ? name.substring(0, 6) : name;
+        return user;
     }
 
+    // 서비스에서 사용하는 구글 정보 업데이트 메서드
     public void updateFromGoogle(String email, String name) {
-        if (email != null && !email.isBlank()) this.email = email;
-        if (name != null && !name.isBlank()) this.name = name;
+        this.email = email;
+        this.name = (name != null && name.length() > 6) ? name.substring(0, 6) : name;
+        // updatedAt은 AuditingEntityListener에 의해 자동으로 갱신됩니다.
+    }
+
+    // 기존 프로필 수정 메서드
+    public void updateBasics(String name, String phoneNumber) {
+        if (name != null) this.name = name;
+        if (phoneNumber != null) this.phoneNumber = phoneNumber;
     }
 }
