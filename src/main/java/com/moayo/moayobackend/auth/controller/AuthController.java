@@ -7,6 +7,8 @@ import com.moayo.moayobackend.auth.service.JwtProvider;
 import com.moayo.moayobackend.global.response.ApiResponse;
 import com.moayo.moayobackend.user.entity.User;
 import io.jsonwebtoken.Claims;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +25,8 @@ import org.springframework.web.servlet.view.RedirectView;
  * 3) POST /api/v1/auth/token/refresh
  * 4) POST /api/v1/auth/logout
  */
+
+@Tag(name="구글 소셜 로그인 및 토큰 관리", description = "구글 소셜 로그인, 토큰 관리 API, 로그아웃")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -40,10 +44,7 @@ public class AuthController {
     private static final String STATE_COOKIE = "oauth_state";
     private static final String REFRESH_COOKIE = "refresh_token";
 
-    /**
-     * 구글 로그인 시작(동의 화면으로 리다이렉트)
-     * - CSRF 방지용 state를 HttpOnly 쿠키에 저장
-     */
+    @Operation(summary = "소셜 로그인 시작", description = "구글 로그인 동의 화면으로 리다이렉트합니다. CSRF 방지용 state 쿠키가 생성됩니다.")
     @GetMapping("/oauth/google")
     public RedirectView googleStart(HttpServletResponse res) {
         String state = googleOAuthService.createState();
@@ -60,10 +61,7 @@ public class AuthController {
         return new RedirectView(googleOAuthService.buildAuthorizeUrl(state));
     }
 
-    /**
-     * 구글 콜백
-     * - state 검증 -> user upsert -> refresh 쿠키 세팅 -> 프론트로 리다이렉트
-     */
+    @Operation(summary = "소셜 로그인 콜백", description = "구글 로그인 성공 후 리다이렉트되는 경로입니다. 유저 정보를 저장하고 Refresh Token(쿠키)을 발급합니다.")
     @GetMapping("/oauth/google/callback")
     public RedirectView googleCallback(
             @RequestParam String code,
@@ -104,27 +102,31 @@ public class AuthController {
                     .maxAge(0)
                     .build();
             res.addHeader("Set-Cookie", deleteState.toString());
-            return new RedirectView(frontRedirectUrl);
+
+            // Access Token 생성
+            String access = jwtProvider.createAccessToken(user.getId());
+
+            // URL에 Access Token을 쿼리 스트링으로 붙여서 리다이렉트
+            String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access;
+
+            return new RedirectView(redirectUrlWithToken);
         } catch (Exception e) {
             e.printStackTrace();
             return new RedirectView(frontRedirectUrl + "?error=server_error");
         }
     }
 
-    /**
-     * 토큰 재발급
-     * - refresh 쿠키로 access token 재발급
-     */
+    @Operation(summary = "토큰 재발급", description = "HttpOnly 쿠키에 저장된 Refresh Token을 사용하여 새로운 Access Token을 발급받습니다.")
     @PostMapping("/token/refresh")
     public ApiResponse<TokenResponseDto> refresh(HttpServletRequest req) {
         String refreshToken = readCookie(req, REFRESH_COOKIE);
         if (refreshToken == null) {
-            return ApiResponse.fail("AUTH-401", "refresh 토큰이 없어.");
+            return ApiResponse.fail("AUTH-401", "refresh 토큰이 없습니다.");
         }
 
         Claims claims = jwtProvider.parse(refreshToken);
         if (!"refresh".equals(claims.get("typ"))) {
-            return ApiResponse.fail("AUTH-401", "refresh 토큰이 아니야.");
+            return ApiResponse.fail("AUTH-401", "refresh 토큰이 아닙니다.");
         }
 
         Long userId = Long.valueOf(claims.getSubject());
@@ -133,10 +135,7 @@ public class AuthController {
         return ApiResponse.ok("SUCCESS-200", "요청에 성공했습니다.", new TokenResponseDto(access));
     }
 
-    /**
-     * 로그아웃
-     * - refresh 쿠키 삭제
-     */
+    @Operation(summary = "로그아웃", description = "서버에 저장된 Refresh Token 쿠키를 삭제하여 로그아웃 처리합니다.")
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletResponse res) {
         ResponseCookie deleteRefresh = ResponseCookie.from(REFRESH_COOKIE, "")

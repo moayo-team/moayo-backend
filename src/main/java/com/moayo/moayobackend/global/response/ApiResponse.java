@@ -2,8 +2,11 @@ package com.moayo.moayobackend.global.response;
 
 import java.time.OffsetDateTime;
 
-
-// 프로젝트 공통 응답 포맷
+/*
+ ApiResponse
+ - 프로젝트 공통 응답 포맷
+ - 성공/실패 모두 동일한 구조로 내려줌
+*/
 public record ApiResponse<T>(
         boolean isSuccess,
         String code,
