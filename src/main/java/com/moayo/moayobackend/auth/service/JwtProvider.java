@@ -65,4 +65,11 @@ public class JwtProvider {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+
+    public Long extractUserId(String token) {
+        Claims claims = parse(token);
+        String subject = claims.getSubject(); 
+        return Long.valueOf(subject);
+    }
 }
