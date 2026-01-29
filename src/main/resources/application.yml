@@ -1,19 +1,51 @@
 spring:
   application:
-    name: "moayo-backend" # "umc9th"
+    name: "moayo-backend"
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver # MySQL JDBC ???? ??? ??
-    url: ${DB_URL} # jdbc:mysql://localhost:3306/{???????}
-    username: ${DB_USER} # MySQL ?? ??
-    password: ${DB_PW} # MySQL ????
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PW}
 
   jpa:
-    database: mysql # ??? ?????? ?? ?? (MySQL)
-    database-platform: org.hibernate.dialect.MySQLDialect # Hibernate?? ??? MySQL ??(dialect) ??
-    show-sql: true # ??? SQL ??? ??? ???? ?? ??
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
     hibernate:
-      ddl-auto: update # ?????? ?? ? ?????? ???? ??? ??
+      ddl-auto: update
     properties:
       hibernate:
-        format_sql: true # ???? SQL ??? ?? ?? ???
+        format_sql: true
+
+ai:
+  server:
+    base-url: "http://localhost:9999"   # 일단 더미
+    api-key: ""                         # 없어도 됨
+
+app:
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:empty_id}
+      client-secret: ${GOOGLE_CLIENT_SECRET:empty_secret}
+      redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/google/callback}
+      scope: "openid email profile"
+
+  jwt:
+    issuer: "moayo"
+    secret: ${JWT_SECRET:very_long_dummy_secret_key_for_build_success}
+    access-token-ttl-seconds: 2592000
+    refresh-token-ttl-seconds: 1209600
+
+  front:
+    redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173}
+
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG         # SQL 문 확인
+    com.moayo.moayobackend: TRACE   # 우리 코드의 아주 상세한 로그까지 확인
