@@ -35,10 +35,9 @@ jobs:
             sudo docker rm -f moayo-server || true
             sudo docker pull baesuhyun/moayo
             sudo docker run -d -p 80:8080 --name moayo-server \
-              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USER }}" \
-              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PW }}" \
-              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USER="${{ secrets.DB_USER }}" \
+              -e DB_PW="${{ secrets.DB_PW }}" \
               -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
