@@ -33,9 +33,15 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo docker rm -f moayo-server || true
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/moayo
+            sudo docker pull baesuhyun/moayo
             sudo docker run -d -p 80:8080 --name moayo-server \
-              -e DB_URL="jdbc:mysql://moayo-db.cjcae66k8tk7.ap-northeast-2.rds.amazonaws.com:3306/moayo?createDatabaseIfNotExist=true" \
-              -e DB_USER="suhyun" \
-              -e DB_PW="moayo123" \
-              ${{ secrets.DOCKER_USERNAME }}/moayo
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USER="${{ secrets.DB_USER }}" \
+              -e DB_PW="${{ secrets.DB_PW }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e GOOGLE_REDIRECT_URI="http://15.164.218.67.nip.io/api/v1/auth/oauth/google/callback" \
+              -e FRONT_REDIRECT_URL="http://15.164.218.67.nip.io/auth/callback" \
+              -e COOKIE_SECURE="false" \
+              baesuhyun/moayo
