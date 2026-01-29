@@ -21,6 +21,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private static final String MASTER_KEY = "moayo";
 
     public JwtAuthFilter(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
@@ -35,29 +36,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            try {
-                Claims c = jwtProvider.parse(token);
-                System.out.println(">>> 파싱된 Claims: " + c);
+            if (MASTER_KEY.equals(token)) {
+                System.out.println(">>> [MASTER KEY] 마스터 키 인증 성공! 테스트 계정(ID: 1)으로 접속합니다.");
 
-                if ("access".equals(c.get("typ"))) {
-                    Long userId = Long.valueOf(c.getSubject());
-                    System.out.println(">>> 인증 성공! userId: " + userId);
+                var auth = new UsernamePasswordAuthenticationToken(
+                        1L, // 테스트용 userId (DB에 존재하는 ID여야 함)
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } else {
+                try {
+                    Claims c = jwtProvider.parse(token);
+                    System.out.println(">>> 파싱된 Claims: " + c);
 
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                    );
+                    if ("access".equals(c.get("typ"))) {
+                        Long userId = Long.valueOf(c.getSubject());
+                        System.out.println(">>> 인증 성공! userId: " + userId);
 
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                } else {
-                    System.out.println(">>> typ 클레임이 'access'가 아닙니다: " + c.get("typ"));
+                        var auth = new UsernamePasswordAuthenticationToken(
+                                userId,
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        );
+
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    } else {
+                        System.out.println(">>> 인증 실패: 토큰 타입이 'access'가 아닙니다: " + c.get("typ"));
+                    }
+                } catch (Exception e) {
+                    System.out.println(">>> JWT 인증 에러 발생: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                System.out.println(">>> JWT 인증 에러 발생: " + e.getMessage());
             }
-        } else {
-            System.out.println(">>> Authorization 헤더가 없거나 형식이 올바르지 않습니다.");
         }
 
         chain.doFilter(request, response);
