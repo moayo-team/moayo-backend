@@ -1,5 +1,5 @@
 # 1. 어떤 환경에서 실행할지 결정
-FROM openjdk:17-jdk-slim
+FROM bellsoft/liberica-openjdk-alpine:17
 
 # 2. 빌드된 실행 파일(.jar)이 어디 있는지 지정
 ARG JAR_FILE=build/libs/*.jar
