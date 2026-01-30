@@ -40,7 +40,8 @@ public class User extends BaseEntity { // BaseEntity 상속
     @Column(name="phone_number", length = 11)
     private String phoneNumber;
 
-    // createdAt, updatedAt 필드는 BaseEntity에서 관리하므로 삭제했습니다.
+    @Column(nullable = false, length = 20)
+    private String role;
 
     // 서비스에서 사용하는 구글 사용자 생성 메서드
     public static User createGoogleUser(String sub, String email, String name) {
@@ -48,7 +49,7 @@ public class User extends BaseEntity { // BaseEntity 상속
         user.oauthProvider = "google";
         user.oauthSub = sub;
         user.email = email;
-        // 이름 길이 예외 방지를 위해 6자 제한 (필요시 DB 길이를 늘리세요)
+        user.role = "USER";
         user.name = (name != null && name.length() > 6) ? name.substring(0, 6) : name;
         return user;
     }
@@ -57,7 +58,6 @@ public class User extends BaseEntity { // BaseEntity 상속
     public void updateFromGoogle(String email, String name) {
         this.email = email;
         this.name = (name != null && name.length() > 6) ? name.substring(0, 6) : name;
-        // updatedAt은 AuditingEntityListener에 의해 자동으로 갱신됩니다.
     }
 
     // 기존 프로필 수정 메서드
