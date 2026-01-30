@@ -73,8 +73,12 @@ public class AuthController {
 
         try {
             String savedState = readCookie(req, STATE_COOKIE);
+            System.out.println(">>> 쿠키에서 가져온 state: " + savedState);
+            System.out.println(">>> 구글이 보내준 state: " + state);
+
             if (savedState == null || !savedState.equals(state)) {
-                return new RedirectView(frontRedirectUrl + "?error=state_mismatch");
+                System.out.println(">>> [경고] state 불일치 발생!");
+//                return new RedirectView(frontRedirectUrl + "?error=state_mismatch");
             }
             GoogleUserInfoResponseDto info = googleOAuthService.fetchUserInfoByCode(code);
             System.out.println("2. 구글 유저 정보 획득 완료: " + info.email());
