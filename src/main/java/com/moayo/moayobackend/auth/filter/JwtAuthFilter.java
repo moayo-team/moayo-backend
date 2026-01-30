@@ -31,8 +31,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
         System.out.println(">>> Swagger에서 넘어온 Header: [" + header + "]");
+        System.out.println(">>> 요청 api : [" + request.getMethod() + "] " + request.getRequestURI() + " | Header: [" + header + "]");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
