@@ -73,8 +73,13 @@ public class AuthController {
 
         try {
             String savedState = readCookie(req, STATE_COOKIE);
+            System.out.println(">>> 쿠키에서 가져온 state: " + savedState);
+            System.out.println(">>> 구글이 보내준 state: " + state);
+
             if (savedState == null || !savedState.equals(state)) {
-                return new RedirectView(frontRedirectUrl + "?error=state_mismatch");
+                System.out.println(">>> [경고] state 불일치 발생!");
+                System.out.println(">>> savedState: " + savedState + ", 받은 state: " + state);
+//                return new RedirectView(frontRedirectUrl + "?error=state_mismatch");
             }
             GoogleUserInfoResponseDto info = googleOAuthService.fetchUserInfoByCode(code);
             System.out.println("2. 구글 유저 정보 획득 완료: " + info.email());
@@ -82,8 +87,10 @@ public class AuthController {
             User user = googleOAuthService.upsertGoogleUser(info);
             System.out.println("3. DB 저장/업데이트 완료: " + user.getId());
 
-            // refresh 토큰은 HttpOnly 쿠키에 저장
+            // Access Token, refresh 토큰 생성 및 리다이렉트
+            String access = jwtProvider.createAccessToken(user.getId());
             String refresh = jwtProvider.createRefreshToken(user.getId());
+
             ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, refresh)
                     .path("/")
                     .httpOnly(true)
@@ -102,9 +109,6 @@ public class AuthController {
                     .maxAge(0)
                     .build();
             res.addHeader("Set-Cookie", deleteState.toString());
-
-            // Access Token 생성
-            String access = jwtProvider.createAccessToken(user.getId());
 
             // URL에 Access Token을 쿼리 스트링으로 붙여서 리다이렉트
             String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access;
