@@ -112,7 +112,7 @@ public class AuthController {
 
             // URL에 Access Token을 쿼리 스트링으로 붙여서 리다이렉트
             String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access;
-
+            System.out.println(">>> 현재 설정된 frontRedirectUrl: " + frontRedirectUrl);
             return new RedirectView(redirectUrlWithToken);
         } catch (Exception e) {
             e.printStackTrace();

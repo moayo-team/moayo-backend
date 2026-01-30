@@ -38,7 +38,7 @@ app:
     refresh-token-ttl-seconds: 1209600
 
   front:
-    redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173}
+    redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173/auth/callback}
 
   cookie:
     secure: ${COOKIE_SECURE:false}
