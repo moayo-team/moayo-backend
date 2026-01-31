@@ -54,6 +54,16 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ApiResponse<Void> handleIllegalArgument(IllegalArgumentException e) {
+        return ApiResponse.fail(GeneralErrorCode.BAD_REQUEST.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ApiResponse<Void> handleIllegalState(IllegalStateException e) {
+        return ApiResponse.fail(GeneralErrorCode.BAD_REQUEST.getCode(), e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ApiResponse<Void> handleAny(Exception e) {
         return ApiResponse.fail("SERVER500_1", "서버 오류가 발생했습니다.");
