@@ -30,9 +30,9 @@ public class PostController {
     @Operation(summary = "전체 모집글 조회", description = "모든 모집글을 최신순으로 조회하며, 카테고리 필터링이 가능")
     @GetMapping
     public ResponseEntity<Page<PostResponseDto>> getAllPosts(
-            @AuthenticationPrincipal Long userId,
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Category category,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(postService.getPosts(userId, category, pageable));
     }
 
@@ -40,7 +40,7 @@ public class PostController {
     @Operation(summary = "모집글 상세 조회", description = "특정 ID의 게시글 상세 정보를 조회합니다.")
     @GetMapping("/{postId}")
     public ResponseEntity<PostResponseDto> getPostDetail(
-            @AuthenticationPrincipal Long userId,
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostDetail(userId, postId));
     }
@@ -49,25 +49,26 @@ public class PostController {
     @Operation(summary = "새 모집글 등록", description = "로그인한 사용자가 새로운 모집글을 작성합니다.")
     @PostMapping
     public ResponseEntity<Long> create(
-            @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody Post post) {
-        return ResponseEntity.ok(postService.createPost(userId, post));
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody com.moayo.moayobackend.post.dto.PostRequestDto requestDto) {
+        return ResponseEntity.ok(postService.createPost(userId, requestDto));
     }
 
     // 4. 내 게시글 수정
     @Operation(summary = "내 게시글 수정", description = "내가 작성한 게시글의 내용을 수정합니다.")
     @PatchMapping("/{postId}")
     public ResponseEntity<Void> update(
-            @AuthenticationPrincipal Long userId,
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long postId,
-            @RequestParam String title,
-            @RequestParam String content,
-            @RequestParam Integer count,
-            @RequestParam Category category,
-            @RequestParam String role,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate deadline) {
-
-        postService.updatePost(userId, postId, title, content, category, role, count, deadline);
+            @RequestBody com.moayo.moayobackend.post.dto.PostRequestDto requestDto) {
+        
+        postService.updatePost(userId, postId, 
+                requestDto.getTitle(), 
+                requestDto.getContent(), 
+                requestDto.getCategory(), 
+                requestDto.getRole(), 
+                requestDto.getTotalCount(), 
+                requestDto.getDeadline());
         return ResponseEntity.ok().build();
     }
 
@@ -75,7 +76,7 @@ public class PostController {
     @Operation(summary = "내 게시글 삭제", description = "내가 작성한 게시글을 삭제합니다.")
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> delete(
-            @AuthenticationPrincipal Long userId,
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long postId) {
         postService.deletePost(userId, postId);
         return ResponseEntity.noContent().build();
@@ -85,8 +86,8 @@ public class PostController {
     @Operation(summary = "내 게시글 모아보기", description = "로그인한 본인이 작성한 게시글 목록만 모아서 조회합니다.")
     @GetMapping("/me")
     public ResponseEntity<Page<PostResponseDto>> getMyPosts(
-            @AuthenticationPrincipal Long userId,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(postService.getMyPosts(userId, pageable));
     }
 }
