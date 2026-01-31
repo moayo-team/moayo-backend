@@ -14,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.moayo.moayobackend.post.dto.PostRequestDto;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,9 +31,9 @@ public class PostController {
     @Operation(summary = "전체 모집글 조회", description = "모든 모집글을 최신순으로 조회하며, 카테고리 필터링이 가능")
     @GetMapping
     public ResponseEntity<Page<PostResponseDto>> getAllPosts(
-            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Category category,
-            @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(postService.getPosts(userId, category, pageable));
     }
 
@@ -40,7 +41,7 @@ public class PostController {
     @Operation(summary = "모집글 상세 조회", description = "특정 ID의 게시글 상세 정보를 조회합니다.")
     @GetMapping("/{postId}")
     public ResponseEntity<PostResponseDto> getPostDetail(
-            @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostDetail(userId, postId));
     }
@@ -50,7 +51,7 @@ public class PostController {
     @PostMapping
     public ResponseEntity<Long> create(
             @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody com.moayo.moayobackend.post.dto.PostRequestDto requestDto) {
+            @Valid @RequestBody PostRequestDto requestDto) {
         return ResponseEntity.ok(postService.createPost(userId, requestDto));
     }
 
@@ -60,14 +61,14 @@ public class PostController {
     public ResponseEntity<Void> update(
             @io.swagger.v3.oas.annotations.Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long postId,
-            @RequestBody com.moayo.moayobackend.post.dto.PostRequestDto requestDto) {
-        
-        postService.updatePost(userId, postId, 
-                requestDto.getTitle(), 
-                requestDto.getContent(), 
-                requestDto.getCategory(), 
-                requestDto.getRole(), 
-                requestDto.getTotalCount(), 
+            @RequestBody PostRequestDto requestDto) {
+
+        postService.updatePost(userId, postId,
+                requestDto.getTitle(),
+                requestDto.getContent(),
+                requestDto.getCategory(),
+                requestDto.getRole(),
+                requestDto.getTotalCount(),
                 requestDto.getDeadline());
         return ResponseEntity.ok().build();
     }
