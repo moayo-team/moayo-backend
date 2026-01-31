@@ -32,6 +32,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             sudo docker rm -f moayo-server || true
             sudo docker pull baesuhyun/moayo
             sudo docker run -d -p 80:8080 --name moayo-server \
@@ -42,6 +43,6 @@ jobs:
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e GOOGLE_REDIRECT_URI="http://15.164.218.67.nip.io/api/v1/auth/oauth/google/callback" \
-              -e FRONT_REDIRECT_URL="http://15.164.218.67.nip.io/auth/callback" \
+              -e FRONT_REDIRECT_URL="${{ secrets.FRONT_REDIRECT_URL }}" \
               -e COOKIE_SECURE="false" \
               baesuhyun/moayo
