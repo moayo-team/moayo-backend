@@ -40,17 +40,27 @@ public class PostService {
     }
 
     // 새 모집글 등록
+    // 새 모집글 등록
     @Transactional
-    public Long createPost(Long userId, Post request) {
+    public Long createPost(Long userId, com.moayo.moayobackend.post.dto.PostRequestDto request) {
         // 1. 토큰의 userId로 DB에서 실제 유저 정보(닉네임 등) 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + userId));
 
-        // 2. 작성자 정보 설정
-        request.setAuthorId(userId);
-        request.setAuthorNickname(user.getName());
+        // 2. DTO -> Entity 변환
+        Post post = new Post();
+        post.setTitle(request.getTitle());
+        post.setContent(request.getContent());
+        post.setCategory(request.getCategory());
+        post.setRole(request.getRole());
+        post.setTotalCount(request.getTotalCount());
+        post.setDeadline(request.getDeadline());
 
-        return postRepository.save(request).getPostId();
+        // 3. 작성자 정보 설정
+        post.setAuthorId(userId);
+        post.setAuthorNickname(user.getName());
+
+        return postRepository.save(post).getPostId();
     }
 
     // 게시글 내 모든 항목 수정 가능
