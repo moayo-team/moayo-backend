@@ -22,7 +22,7 @@ import java.util.List;
 @Tag(name = "이력서(Experience)", description = "이력서(Experience) 생성, 조회, 수정, 삭제 및 AI 초안 생성 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/experiences")
+@RequestMapping("/api/v1/experiences")
 public class ExperienceController {
 
     private final ExperienceService experienceService;

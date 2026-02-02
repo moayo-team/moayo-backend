@@ -16,7 +16,7 @@ import java.util.List;
 @Tag(name = "이력서 파일 첨부", description = "이력서에 파일을 첨부/조회/삭제하는 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/experiences/{experienceId}/attachments/files")
+@RequestMapping("/api/v1/experiences/{experienceId}/attachments/files")
 public class ExperienceAttachmentController {
 
     private final ExperienceAttachmentService attachmentService;
