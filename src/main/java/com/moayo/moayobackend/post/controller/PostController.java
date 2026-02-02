@@ -21,7 +21,7 @@ import java.time.LocalDate;
 
 @Tag(name = "Post API", description = "게시판 모집글 관련 API")
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 public class PostController {
 
