@@ -17,7 +17,7 @@ import java.util.List;
 @Tag(name = "이력서 링크 첨부", description = "이력서에 링크를 첨부/조회/수정/삭제하는 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/experiences/{experienceId}/attachments/links")
+@RequestMapping("/api/v1/experiences/{experienceId}/attachments/links")
 public class ExperienceLinkController {
 
     private final ExperienceLinkService linkService;
