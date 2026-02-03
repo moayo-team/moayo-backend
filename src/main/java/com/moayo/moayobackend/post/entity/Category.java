@@ -11,6 +11,7 @@ public enum Category {
     DESIGN("디자인"),
     DEVELOPMENT("개발"),
     ART_SPORTS("예체능"),
+    STARTUP("창업"),
     LITERATURE("문학"),
     OTHERS("기타");
 
