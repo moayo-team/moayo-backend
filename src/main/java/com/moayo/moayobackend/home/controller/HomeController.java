@@ -4,6 +4,7 @@ import com.moayo.moayobackend.global.response.ApiResponse;
 import com.moayo.moayobackend.home.dto.HomeResponseDto;
 import com.moayo.moayobackend.home.service.HomeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +26,21 @@ public class HomeController {
     )
     @GetMapping
     public ApiResponse<HomeResponseDto> getHome(
+            @Parameter(description = "로그인한 유저의 고유 ID (PK)", example = "1")
             @RequestParam Long userId,
+
+            @Parameter(description = "가져올 게시글 최대 개수 (기본값: 3)", example = "3")
             @RequestParam(defaultValue = "3") int postsLimit,
+
+            @Parameter(description = "추천받을 유저 최대 개수 (기본값: 4)", example = "4")
             @RequestParam(defaultValue = "4") int recoLimit,
+
+            @Parameter(
+                    description = "추천 알고리즘 유형: \n" +
+                            "- **similar**: 관심사 유사도 기반 추천\n" +
+                            "- **synergy**: 직군 간 협업 시너지 기반 추천 (기획-개발 등)",
+                    example = "synergy"
+            )
             @RequestParam(defaultValue = "similar") String recoType
     ) {
         HomeResponseDto result =
