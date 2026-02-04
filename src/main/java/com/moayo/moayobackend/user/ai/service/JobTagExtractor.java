@@ -30,7 +30,6 @@ public class JobTagExtractor {
             if (containsAny(t, "예체능", "음악", "미술", "체육", "공연")) tags.add(JobTag.ARTS);
             if (containsAny(t, "문학", "소설", "시", "에세이", "글쓰기")) tags.add(JobTag.LITERATURE);
         } else {
-            // 선택 태그가 있어도, 스냅샷에서 강하게 드러나는 보강은 추가(선택)
             if (!tags.contains(JobTag.STARTUP) && containsAny(t, "창업", "사업", "mvp", "피벗", "투자", "bm")) {
                 tags.add(JobTag.STARTUP);
             }
