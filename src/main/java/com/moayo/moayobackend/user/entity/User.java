@@ -1,10 +1,14 @@
 package com.moayo.moayobackend.user.entity;
 
 import com.moayo.moayobackend.global.entity.BaseEntity;
+import com.moayo.moayobackend.profile.entity.InterestTag;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  User

@@ -8,11 +8,13 @@ import com.moayo.moayobackend.user.entity.User;
 import com.moayo.moayobackend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -101,5 +103,17 @@ public class PostService {
     public Page<PostResponseDto> getMyPosts(Long userId, Pageable pageable) {
         return postRepository.findAllByAuthorIdOrderByCreatedAtDesc(userId, pageable)
                 .map(PostResponseDto::new);
+    }
+
+    // 홈화면 - 마감임박 게시글 조회
+    @Transactional
+    public List<PostResponseDto> getImminentPostsForHome(int limit) {
+        LocalDate today = LocalDate.now();
+
+        return postRepository
+                .findImminentPosts(today, PageRequest.of(0, limit))
+                .stream()
+                .map(PostResponseDto::new)
+                .toList();
     }
 }

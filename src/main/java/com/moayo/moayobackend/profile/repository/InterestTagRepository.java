@@ -3,6 +3,8 @@ package com.moayo.moayobackend.profile.repository;
 import com.moayo.moayobackend.profile.entity.InterestTag;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /*
  InterestTagRepository
  - interest_tags 마스터 테이블 접근
@@ -10,4 +12,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface InterestTagRepository extends JpaRepository<InterestTag, Long> {
     boolean existsById(Long id);
     boolean existsByName(String name);
+
+    List<InterestTag> findAllByIdIn(List<Long> ids);
 }

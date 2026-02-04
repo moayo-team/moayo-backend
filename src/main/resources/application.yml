@@ -22,6 +22,10 @@ ai:
   server:
     base-url: "http://localhost:9999"   # 일단 더미
     api-key: ""                         # 없어도 됨
+  recommend: #유저 추천 기능
+    base-url: "https://api.openai.com/v1"
+    api-key: ${OPENAI_API_KEY:dummy}
+    model: "gpt-4o-mini"
 
 app:
   oauth:
