@@ -92,10 +92,6 @@ public class GoogleOAuthService {
     @Transactional
     public User upsertGoogleUser(GoogleUserInfoResponseDto info) {
         return userRepository.findByOauthProviderAndOauthSub("google", info.sub())
-                .map(u -> {
-                    u.updateFromGoogle(info.email(), info.name());
-                    return u;
-                })
                 .orElseGet(() -> userRepository.save(
                         User.createGoogleUser(info.sub(), info.email(), info.name())
                 ));
