@@ -34,8 +34,8 @@ public class UserRecommendationReasonService {
             InterestTagMapper interestTagMapper,
             UserInterestTagRepository userInterestTagRepository,
             InterestTagRepository interestTagRepository,
-            @Value("${ai.server.base-url}") String baseUrl,
-            @Value("${ai.server.api-key:}") String apiKey
+            @Value("${ai.recommend.base-url}") String baseUrl,
+            @Value("${ai.recommend.api-key:}") String apiKey
     ) {
         this.synergyMatrix = synergyMatrix;
         this.jobTagExtractor = jobTagExtractor;
