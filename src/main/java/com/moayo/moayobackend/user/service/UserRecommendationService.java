@@ -46,15 +46,15 @@ public class UserRecommendationService {
     private final InterestTagMapper interestTagMapper;
     private final JobTagExtractor jobTagExtractor;
     private final SynergyMatrix synergyMatrix;
+    private final UserRecommendationReasonService reasonService;
 
-    /*
-     추천 진입점
-    */
+
+    // 추천 진입점
     @Transactional
     public UserRecommendationResponseDto recommend(Long userId, String type, int limit) {
 
         // 1) 본인 확인
-        userRepository.findById(userId)
+        User me = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다. id=" + userId));
 
         // 2) 본인 스냅샷/임베딩 준비
@@ -75,14 +75,17 @@ public class UserRecommendationService {
         List<ScoredCandidate> scored = new ArrayList<>();
         boolean synergyMode = "synergy".equalsIgnoreCase(type);
 
+        Map<Long, String> snapshotCache = new HashMap<>();
+        snapshotCache.put(userId, meSnapshot.getText());
+
         for (User c : candidates) {
             Long cid = c.getId();
 
             UserProfileSnapshot cs = snapshotRepository.findById(cid)
                     .orElseGet(() -> snapshotService.rebuildSnapshot(cid));
 
+            snapshotCache.put(cid, cs.getText());
             UserEmbedding ce = upsertEmbedding(cid, cs.getText());
-
             double sim = SimilarityUtils.cosine(meVec, SimilarityUtils.fromJson(ce.getVectorJson()));
 
             if (synergyMode) {
@@ -90,8 +93,6 @@ public class UserRecommendationService {
                 Set<JobTag> cTags = jobTagExtractor.extract(cInterestNames, cs.getText(), interestTagMapper);
 
                 double syn = synergyMatrix.synergyScore(myTags, cTags);
-
-                // 최종 점수: 시너지 0.6 + 유사도 0.4
                 double finalScore = (0.6 * syn) + (0.4 * sim);
                 scored.add(new ScoredCandidate(c, sim, syn, finalScore));
             } else {
@@ -100,25 +101,28 @@ public class UserRecommendationService {
         }
 
         scored.sort(Comparator.comparingDouble(ScoredCandidate::finalScore).reversed());
-
         List<ScoredCandidate> top = scored.stream().limit(limit).toList();
 
         // 6) DTO 변환 (profile imageUrl 붙이기)
         List<RecommendedUserDto> items = top.stream()
                 .map(sc -> {
-                    String imageUrl = profileRepository.findByUserId(sc.user().getId())
+                    User target = sc.user();
+                    String imageUrl = profileRepository.findByUserId(target.getId())
                             .map(p -> p.getImageUrl())
                             .orElse(null);
 
-                    String bio = toBio(loadInterestTagNames(sc.user().getId()));
+                    String bio = toBio(loadInterestTagNames(target.getId()));
 
-                    String reason = synergyMode
-                            ? "관심태그/이력 기반 시너지 조합 추천"
-                            : "관심태그/이력 기반 유사도 추천";
+                    String reason = reasonService.getMatchReason(
+                            me,
+                            target,
+                            snapshotCache.get(me.getId()),
+                            snapshotCache.get(target.getId())
+                    );
 
                     return RecommendedUserDto.builder()
-                            .userId(sc.user().getId())
-                            .name(sc.user().getName())
+                            .userId(target.getId())
+                            .name(target.getName())
                             .imageUrl(imageUrl)
                             .bio(bio)
                             .matchReason(reason)
