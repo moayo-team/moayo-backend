@@ -34,8 +34,8 @@ public class UserRecommendationReasonService {
             InterestTagMapper interestTagMapper,
             UserInterestTagRepository userInterestTagRepository,
             InterestTagRepository interestTagRepository,
-            @Value("${ai.recommend.base-url}") String baseUrl,
-            @Value("${ai.recommend.api-key:}") String apiKey
+            @Value("${ai.openai.base-url}") String baseUrl,
+            @Value("${ai.openai.api-key:}") String apiKey
     ) {
         this.synergyMatrix = synergyMatrix;
         this.jobTagExtractor = jobTagExtractor;
@@ -126,7 +126,7 @@ public class UserRecommendationReasonService {
             );
 
             return webClient.post()
-                    .uri("/chat/completions") // 정확한 OpenAI 엔드포인트로 수정
+                    .uri("v1/chat/completions") // 정확한 OpenAI 엔드포인트로 수정
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)

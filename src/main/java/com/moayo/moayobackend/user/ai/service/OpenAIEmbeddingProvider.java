@@ -11,13 +11,13 @@ import java.util.*;
 //@Primary
 public class OpenAIEmbeddingProvider implements EmbeddingProvider {
 
-    @Value("${ai.recommend.api-key}")
+    @Value("${ai.openai.api-key}")
     private String apiKey;
 
-    @Value("${ai.recommend.base-url}")
+    @Value("${ai.openai.base-url}")
     private String baseUrl;
 
-    @Value("${ai.recommend.model}")
+    @Value("${ai.openai.model}")
     private String model;
 
     private final RestTemplate restTemplate = new RestTemplate();
