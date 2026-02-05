@@ -20,8 +20,8 @@ public class AiServerClient {
     private final WebClient webClient;
 
     public AiServerClient(
-            @Value("${ai.server.base-url}") String baseUrl,
-            @Value("${ai.server.api-key:}") String apiKey
+            @Value("${ai.openai.base-url}") String baseUrl,
+            @Value("${ai.openai.api-key:}") String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(15));
