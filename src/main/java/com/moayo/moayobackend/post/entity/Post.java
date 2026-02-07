@@ -40,5 +40,5 @@ public class Post extends BaseEntity {
     private String authorNickname;
     private String profileImageUrl = "default_url";
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+//    private LocalDateTime createdAt = LocalDateTime.now();
 }
