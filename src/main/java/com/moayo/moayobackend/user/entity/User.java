@@ -23,7 +23,7 @@ import java.util.List;
                 @UniqueConstraint(name = "uk_users_oauth", columnNames = {"oauth_provider", "oauth_sub"}),
                 @UniqueConstraint(name = "uk_users_email", columnNames = {"email"})
         })
-public class User extends BaseEntity { // BaseEntity 상속
+public class User extends BaseEntity { 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
