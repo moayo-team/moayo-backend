@@ -40,6 +40,16 @@ public class ExperienceLinkService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ExperienceLinkResponse> listPublicLinks(Long experienceId) {
+        Experience e = experienceRepository.findByIdAndVisibleTrue(experienceId)
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found or not public"));
+
+        return linkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId).stream()
+                .map(l -> new ExperienceLinkResponse(l.getId(), l.getTitle(), l.getUrl()))
+                .toList();
+    }
+
     @Transactional
     public void update(Long userId, Long experienceId, Long linkId, ExperienceLinkUpdateRequest req) {
         Experience e = experienceRepository.findById(experienceId)

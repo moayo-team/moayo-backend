@@ -80,6 +80,24 @@ public class ExperienceService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public ExperienceDetailResponse getPublicDetail(Long experienceId) {
+        Experience e = experienceRepository.findByIdAndVisibleTrue(experienceId)
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found or not public"));
+
+        return new ExperienceDetailResponse(
+                e.getId(),
+                e.getOrganization(),
+                e.getTitle(),
+                e.getStartDate(),
+                e.getEndDate(),
+                e.getActivity(),
+                e.getRole(),
+                e.getSummary(),
+                e.getVisible()
+        );
+    }
+
     @Transactional
     public void update(Long userId, Long experienceId, ExperienceUpdateRequest req) {
         Experience e = experienceRepository.findById(experienceId)
