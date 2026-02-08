@@ -15,13 +15,13 @@ import java.time.Duration;
 
 @Slf4j
 @Component
-public class OpenAiClient {
+public class AiServerClient {
 
     private final WebClient webClient;
 
-    public OpenAiClient(
-            @Value("${ai.server.base-url}") String baseUrl,
-            @Value("${ai.server.api-key:}") String apiKey
+    public AiServerClient(
+            @Value("${ai.openai.base-url}") String baseUrl,
+            @Value("${ai.openai.api-key:}") String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(15));
@@ -38,18 +38,6 @@ public class OpenAiClient {
         this.webClient = builder.build();
     }
 
-    /**
-     * 내부 AI 서버 응답(flat JSON)
-     * {
-     *   "organization": "...",
-     *   "title": "...",
-     *   "activity": "...",
-     *   "role": "...",
-     *   "summary": "...",
-     *   "startDate": "2024-08-13",
-     *   "endDate": "2024-10-02"
-     * }
-     */
     public ExperienceAiDraftResponse generateExperienceDraft(String prompt, String context) {
         AiServerDraftRequest body = new AiServerDraftRequest(prompt, context);
 
@@ -62,12 +50,10 @@ public class OpenAiClient {
                     .block(Duration.ofSeconds(20));
 
         } catch (WebClientResponseException e) {
-            // AI 서버가 에러응답(400번대, 500번대)을 내려준 경우
             log.error("AI server error: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new IllegalStateException("AI server error: " + e.getStatusCode());
 
         } catch (Exception e) {
-            // 타임아웃, 연결 실패 등
             log.error("AI server call failed", e);
             throw new IllegalStateException("AI server call failed");
         }

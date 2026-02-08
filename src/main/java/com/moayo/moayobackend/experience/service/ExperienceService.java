@@ -13,7 +13,7 @@ import com.moayo.moayobackend.experience.entity.ExperienceLink;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
-import com.moayo.moayobackend.global.ai.OpenAiClient;
+import com.moayo.moayobackend.experience.service.AiServerClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ import java.util.List;
 public class ExperienceService {
 
     private final ExperienceRepository experienceRepository;
-    private final OpenAiClient openAiClient;
+    private final AiServerClient aiServerClient;
     private final ExperienceFileRepository experienceFileRepository;
     private final ExperienceLinkRepository experienceLinkRepository;
 
@@ -56,7 +56,7 @@ public class ExperienceService {
                 req.summary(),
                 req.startDate(),
                 req.endDate(),
-                true
+                true // 생성 시 기본 공개(true)
         );
         return experienceRepository.save(e).getId();
     }
@@ -150,11 +150,8 @@ public class ExperienceService {
         String context = buildContext(e, files, links);
         String finalPrompt = buildFinalPrompt(userPrompt, context);
 
-        // 여기서 OpenAI 호출
-        String drafted = openAiClient.draft(finalPrompt);
-
-        // 응답 DTO로 감싸서 반환
-        return new ExperienceAiDraftResponse(drafted);
+        // 내부 AI 서버 호출 (prompt + context)
+        return aiServerClient.generateExperienceDraft(finalPrompt, context);
     }
 
     private String buildFinalPrompt(String userPrompt, String context) {
@@ -165,11 +162,20 @@ public class ExperienceService {
         한국어로 자연스럽고 간결하게 이력서 문구 초안을 작성해줘.
         - 과장 없이 사실 기반으로
         - 성과/역할/기술이 드러나게
+<<<<<<< HEAD
         - 3~5줄 정도로
 
         [User Prompt]
         %s
 
+=======
+        - 결과는 반드시 불릿 3~5개로만 출력
+        - 각 줄은 "• " 로 시작
+        - 이모지/따옴표/코드블록 금지
+        [User Prompt]
+        %s
+
+>>>>>>> 6c2a497186292e750354360c4640bdcc63931362
         %s
         """.formatted(userPrompt == null ? "" : userPrompt, context == null ? "" : context);
     }
