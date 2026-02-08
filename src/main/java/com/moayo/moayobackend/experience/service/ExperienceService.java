@@ -13,7 +13,7 @@ import com.moayo.moayobackend.experience.entity.ExperienceLink;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
-import com.moayo.moayobackend.global.ai.OpenAiClient;
+import com.moayo.moayobackend.experience.service.AiServerClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ import java.util.List;
 public class ExperienceService {
 
     private final ExperienceRepository experienceRepository;
-    private final OpenAiClient openAiClient;
+    private final AiServerClient aiServerClient;
     private final ExperienceFileRepository experienceFileRepository;
     private final ExperienceLinkRepository experienceLinkRepository;
 
@@ -143,18 +143,19 @@ public class ExperienceService {
         List<ExperienceLink> links =
                 experienceLinkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
 
+        // 사용자가 추가로 던진 프롬프트(선택)
         String userPrompt = (req == null || req.prompt() == null) ? "" : req.prompt();
 
+        // OpenAI로 보내는 최종 프롬프트(컨텍스트 포함)
         String context = buildContext(e, files, links);
         String finalPrompt = buildFinalPrompt(userPrompt, context);
 
-        // ✅ OpenAI 직접 호출
-        String drafted = openAiClient.draft(finalPrompt);
-
-        return new ExperienceAiDraftResponse(drafted);
+        // 내부 AI 서버 호출 (prompt + context)
+        return aiServerClient.generateExperienceDraft(finalPrompt, context);
     }
 
     private String buildFinalPrompt(String userPrompt, String context) {
+        // 필요하면 여기에서 톤, 형식 요구사항을 강제할 수 있음
         return """
         너는 채용 담당자가 읽기 좋은 이력서 문장을 작성하는 전문가야.
         아래 [Existing Experience], [Attached Files], [Attached Links] 내용을 바탕으로
@@ -164,10 +165,16 @@ public class ExperienceService {
         - 결과는 반드시 불릿 3~5개로만 출력
         - 각 줄은 "• " 로 시작
         - 이모지/따옴표/코드블록 금지
+<<<<<<< HEAD
 
         [User Prompt]
         %s
 
+=======
+        [User Prompt]
+        %s
+
+>>>>>>> 6c2a497186292e750354360c4640bdcc63931362
         %s
         """.formatted(userPrompt == null ? "" : userPrompt, context == null ? "" : context);
     }

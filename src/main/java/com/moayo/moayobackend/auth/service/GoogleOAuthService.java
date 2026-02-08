@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -89,12 +90,20 @@ public class GoogleOAuthService {
         return userInfo;
     }
 
+    public record UserLoginDto(User user, boolean isFirstLogin) {}
+
     @Transactional
-    public User upsertGoogleUser(GoogleUserInfoResponseDto info) {
-        return userRepository.findByOauthProviderAndOauthSub("google", info.sub())
-                .orElseGet(() -> userRepository.save(
-                        User.createGoogleUser(info.sub(), info.email(), info.name())
-                ));
+    public UserLoginDto upsertGoogleUser(GoogleUserInfoResponseDto info) {
+        Optional<User> userOpt = userRepository.findByOauthProviderAndOauthSub("google", info.sub());
+
+        if (userOpt.isPresent()) {
+            // 재방문자
+            return new UserLoginDto(userOpt.get(), false);
+        } else {
+            // 첫 로그인 방문자
+            User newUser = userRepository.save(User.createGoogleUser(info.sub(), info.email(), info.name()));
+            return new UserLoginDto(newUser, true);
+        }
     }
 
     private String enc(String v) {
