@@ -10,5 +10,6 @@ public record ExperienceSummaryResponse(
         LocalDate endDate,
         String activity,
         String role,
+        String summary,
         Boolean visible
 ) {}

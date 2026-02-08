@@ -40,6 +40,7 @@ public class ExperienceService {
                         e.getEndDate(),
                         e.getActivity(),
                         e.getRole(),
+                        e.getSummary(),
                         e.getVisible()
                 ))
                 .toList();
@@ -71,6 +72,24 @@ public class ExperienceService {
                 e.getId(),
                 e.getOrganization(),
                 e.getTitle(),
+                e.getStartDate(),
+                e.getEndDate(),
+                e.getActivity(),
+                e.getRole(),
+                e.getSummary(),
+                e.getVisible()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ExperienceDetailResponse getPublicDetail(Long experienceId) {
+        Experience e = experienceRepository.findByIdAndVisibleTrue(experienceId)
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found or not public"));
+
+        return new ExperienceDetailResponse(
+                e.getId(),
+                e.getTitle(),
+                e.getOrganization(),
                 e.getStartDate(),
                 e.getEndDate(),
                 e.getActivity(),
@@ -127,6 +146,7 @@ public class ExperienceService {
                         e.getEndDate(),
                         e.getActivity(),
                         e.getRole(),
+                        e.getSummary(),
                         e.getVisible()
                 ))
                 .toList();
@@ -155,21 +175,24 @@ public class ExperienceService {
     }
 
     private String buildFinalPrompt(String userPrompt, String context) {
-        // 필요하면 여기에서 톤, 형식 요구사항을 강제할 수 있음
         return """
-        너는 채용 담당자가 읽기 좋은 이력서 문장을 작성하는 전문가야.
-        아래 [Existing Experience], [Attached Files], [Attached Links] 내용을 바탕으로
-        한국어로 자연스럽고 간결하게 이력서 문구 초안을 작성해줘.
-        - 과장 없이 사실 기반으로
-        - 성과/역할/기술이 드러나게
-        - 결과는 반드시 불릿 3~5개로만 출력
-        - 각 줄은 "• " 로 시작
-        - 이모지/따옴표/코드블록 금지
-        [User Prompt]
-        %s
+    너는 채용 담당자가 읽기 좋은 이력서 문장을 작성하는 전문가야.
+    아래 [Existing Experience], [Attached Files], [Attached Links] 내용을 바탕으로
+    한국어로 자연스럽고 간결하게 이력서 문구 초안을 작성해줘.
+    - 과장 없이 사실 기반으로
+    - 성과/역할/기술이 드러나게
+    - 결과는 반드시 불릿 3~5개로만 출력
+    - 각 줄은 "• " 로 시작
+    - 이모지/따옴표/코드블록 금지
 
-        %s
-        """.formatted(userPrompt == null ? "" : userPrompt, context == null ? "" : context);
+    [User Prompt]
+    %s
+
+    %s
+    """.formatted(
+                userPrompt == null ? "" : userPrompt,
+                context == null ? "" : context
+        );
     }
 
     private String buildContext(Experience e, List<ExperienceFile> files, List<ExperienceLink> links) {
