@@ -46,6 +46,16 @@ public class ExperienceAttachmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<FileAttachmentResponse> listPublicFiles(Long experienceId) {
+        Experience e = experienceRepository.findByIdAndVisibleTrue(experienceId)
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found or not public"));
+
+        return fileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId).stream()
+                .map(f -> new FileAttachmentResponse(f.getFileId(), f.getFileName()))
+                .toList();
+    }
+
     @Transactional
     public void detachFile(Long userId, Long experienceId, Long fileId) {
         Experience e = experienceRepository.findById(experienceId)

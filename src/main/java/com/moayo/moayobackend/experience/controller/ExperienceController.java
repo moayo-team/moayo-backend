@@ -99,6 +99,17 @@ public class ExperienceController {
         );
     }
 
+    @Operation(summary = "공개 이력서 상세 조회", description = "공개(visible=true) 상태인 이력서 항목의 상세 정보를 조회합니다.")
+    @GetMapping("/public/{experienceId}")
+    public ResponseEntity<ApiResponse<ExperienceDetailResponse>> publicDetail(
+            @PathVariable Long experienceId
+    ) {
+        var result = experienceService.getPublicDetail(experienceId);
+        return ResponseEntity.ok(
+                ApiResponse.ok("SUCCESS-200", "공개 이력 상세 조회 성공", result)
+        );
+    }
+
     @Operation(summary = "특정 사용자의 공개 이력서 조회", description = "특정 사용자가 공개 설정한 이력서 목록을 조회합니다.")
     @GetMapping("/public/{targetUserId}")
     public ResponseEntity<ApiResponse<List<ExperienceSummaryResponse>>> publicList(

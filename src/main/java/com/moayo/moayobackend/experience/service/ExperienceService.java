@@ -8,12 +8,9 @@ import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceDetailResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceSummaryResponse;
 import com.moayo.moayobackend.experience.entity.Experience;
-import com.moayo.moayobackend.experience.entity.ExperienceFile;
-import com.moayo.moayobackend.experience.entity.ExperienceLink;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
-import com.moayo.moayobackend.experience.service.AiServerClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +37,7 @@ public class ExperienceService {
                         e.getEndDate(),
                         e.getActivity(),
                         e.getRole(),
+                        e.getSummary(),
                         e.getVisible()
                 ))
                 .toList();
@@ -56,7 +54,7 @@ public class ExperienceService {
                 req.summary(),
                 req.startDate(),
                 req.endDate(),
-                true // 생성 시 기본 공개(true)
+                true
         );
         return experienceRepository.save(e).getId();
     }
@@ -66,6 +64,24 @@ public class ExperienceService {
         Experience e = experienceRepository.findById(experienceId)
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
         e.validateOwner(userId);
+
+        return new ExperienceDetailResponse(
+                e.getId(),
+                e.getOrganization(),
+                e.getTitle(),
+                e.getStartDate(),
+                e.getEndDate(),
+                e.getActivity(),
+                e.getRole(),
+                e.getSummary(),
+                e.getVisible()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ExperienceDetailResponse getPublicDetail(Long experienceId) {
+        Experience e = experienceRepository.findByIdAndVisibleTrue(experienceId)
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found or not public"));
 
         return new ExperienceDetailResponse(
                 e.getId(),
@@ -127,6 +143,7 @@ public class ExperienceService {
                         e.getEndDate(),
                         e.getActivity(),
                         e.getRole(),
+                        e.getSummary(),
                         e.getVisible()
                 ))
                 .toList();
@@ -138,41 +155,21 @@ public class ExperienceService {
                 .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
         e.validateOwner(userId);
 
-        List<ExperienceFile> files =
-                experienceFileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
-        List<ExperienceLink> links =
-                experienceLinkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
+        // 첨부파일, 링크를 context로 합쳐 AI 품질 올리기
+        var files = experienceFileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
+        var links = experienceLinkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
 
-        // 사용자가 추가로 던진 프롬프트(선택)
-        String userPrompt = (req == null || req.prompt() == null) ? "" : req.prompt();
-
-        // OpenAI로 보내는 최종 프롬프트(컨텍스트 포함)
         String context = buildContext(e, files, links);
-        String finalPrompt = buildFinalPrompt(userPrompt, context);
+        String prompt = (req == null || req.prompt() == null) ? "" : req.prompt();
 
-        // 내부 AI 서버 호출 (prompt + context)
-        return aiServerClient.generateExperienceDraft(finalPrompt, context);
+        // 여기서만 AI 서버 호출, 그리고 결과를 그대로 반환(저장 X)
+        return aiServerClient.generateExperienceDraft(prompt, context);
     }
 
-    private String buildFinalPrompt(String userPrompt, String context) {
-        // 필요하면 여기에서 톤, 형식 요구사항을 강제할 수 있음
-        return """
-        너는 채용 담당자가 읽기 좋은 이력서 문장을 작성하는 전문가야.
-        아래 [Existing Experience], [Attached Files], [Attached Links] 내용을 바탕으로
-        한국어로 자연스럽고 간결하게 이력서 문구 초안을 작성해줘.
-        - 과장 없이 사실 기반으로
-        - 성과/역할/기술이 드러나게
-        - 결과는 반드시 불릿 3~5개로만 출력
-        - 각 줄은 "• " 로 시작
-        - 이모지/따옴표/코드블록 금지
-        [User Prompt]
-        %s
+    private String buildContext(Experience e,
+                                List<com.moayo.moayobackend.experience.entity.ExperienceFile> files,
+                                List<com.moayo.moayobackend.experience.entity.ExperienceLink> links) {
 
-        %s
-        """.formatted(userPrompt == null ? "" : userPrompt, context == null ? "" : context);
-    }
-
-    private String buildContext(Experience e, List<ExperienceFile> files, List<ExperienceLink> links) {
         String filePart = files.stream()
                 .limit(5)
                 .map(f -> "- " + safe(f.getFileName()) + " (fileId=" + f.getFileId() + ")")
