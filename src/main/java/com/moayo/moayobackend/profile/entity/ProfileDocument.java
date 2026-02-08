@@ -33,7 +33,7 @@ public class ProfileDocument extends BaseEntity {
     @Column(name="file_name")
     private String fileName;
 
-    @Column(name="file_type", length = 50)
+    @Column(name="file_type", length = 500)
     private String fileType;
 
     @Column(name="file_size")
