@@ -20,18 +20,15 @@ public class UserProfileSnapshot {
     private String text;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
 
     public static UserProfileSnapshot of(Long userId, String text) {
         UserProfileSnapshot s = new UserProfileSnapshot();
         s.userId = userId;
         s.text = text;
-        s.updatedAt = LocalDateTime.now();
         return s;
     }
 
     public void updateText(String text) {
         this.text = text;
-        this.updatedAt = LocalDateTime.now();
     }
 }

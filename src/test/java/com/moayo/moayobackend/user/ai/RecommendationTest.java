@@ -4,12 +4,14 @@ import com.moayo.moayobackend.user.service.UserProfileSnapshotService;
 import com.moayo.moayobackend.user.ai.entity.UserProfileSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@ActiveProfiles("test")
 @SpringBootTest
 @Transactional // 테스트 후 DB를 다시 깨끗하게 되돌립니다.
 public class RecommendationTest {

@@ -11,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 @NoArgsConstructor
 public class PostResponseDto {
     private Long postId;
+    private Long userId;
     private String title;
     private String summary;
     private String categoryLabel;
@@ -23,6 +24,7 @@ public class PostResponseDto {
 
     public PostResponseDto(Post post) {
         this.postId = post.getPostId();
+        this.userId = post.getAuthorId();
         this.title = post.getTitle();
         this.authorNickname = post.getAuthorNickname();
         this.profileImageUrl = post.getProfileImageUrl();
