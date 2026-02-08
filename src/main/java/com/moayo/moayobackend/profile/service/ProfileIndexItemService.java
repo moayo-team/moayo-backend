@@ -11,16 +11,23 @@ import com.moayo.moayobackend.profile.exception.ProfileErrorCode;
 import com.moayo.moayobackend.profile.repository.ProfileIndexItemRepository;
 import com.moayo.moayobackend.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileIndexItemService {
@@ -28,7 +35,8 @@ public class ProfileIndexItemService {
     private final ProfileRepository profileRepository;
     private final ProfileIndexItemRepository profileIndexItemRepository;
 
-    private final String uploadDir = "C:/Project_BSH/moayo-backend/uploads/";
+    @Value("${app.upload.dir:/uploads/}")
+    private String uploadDir;
 
     @Transactional(readOnly = true)
     public List<ProfileIndexItemResponse> findMine(Long userId) {
@@ -144,15 +152,19 @@ public class ProfileIndexItemService {
     private String saveFile(MultipartFile file) {
         try {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            File targetFile = new File(uploadDir + fileName);
 
-            if (!targetFile.getParentFile().exists()) {
-                targetFile.getParentFile().mkdirs();
+            Path targetPath = Paths.get(uploadDir).resolve(fileName).normalize();
+
+            if (!Files.exists(targetPath.getParent())) {
+                Files.createDirectories(targetPath.getParent());
             }
 
-            file.transferTo(targetFile);
+            file.transferTo(targetPath.toFile());
+
+            log.info("파일 저장 완료: {}", targetPath);
             return "/uploads/" + fileName;
         } catch (IOException e) {
+            log.error("파일 저장 실패: ", e);
             throw new BusinessException(GeneralErrorCode.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다.");
         }
     }
