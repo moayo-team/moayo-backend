@@ -84,7 +84,10 @@ public class AuthController {
             GoogleUserInfoResponseDto info = googleOAuthService.fetchUserInfoByCode(code);
             System.out.println("2. 구글 유저 정보 획득 완료: " + info.email());
 
-            User user = googleOAuthService.upsertGoogleUser(info);
+            GoogleOAuthService.UserLoginDto loginDto = googleOAuthService.upsertGoogleUser(info);
+            User user = loginDto.user();
+            boolean isFirst = loginDto.isFirstLogin();
+
             System.out.println("3. DB 저장/업데이트 완료: " + user.getId());
 
             // Access Token, refresh 토큰 생성 및 리다이렉트
@@ -110,9 +113,8 @@ public class AuthController {
                     .build();
             res.addHeader("Set-Cookie", deleteState.toString());
 
-            // URL에 Access Token을 쿼리 스트링으로 붙여서 리다이렉트
-            String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access;
-            System.out.println(">>> 현재 설정된 frontRedirectUrl: " + frontRedirectUrl);
+            String redirectUrlWithToken = frontRedirectUrl + "?accessToken=" + access + "&isFirst=" + isFirst;
+            System.out.println(">>> 리다이렉트 URL: " + redirectUrlWithToken);
             return new RedirectView(redirectUrlWithToken);
         } catch (Exception e) {
             e.printStackTrace();
