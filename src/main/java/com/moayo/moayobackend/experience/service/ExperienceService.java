@@ -56,7 +56,7 @@ public class ExperienceService {
                 req.summary(),
                 req.startDate(),
                 req.endDate(),
-                true
+                true // 생성 시 기본 공개(true)
         );
         return experienceRepository.save(e).getId();
     }
