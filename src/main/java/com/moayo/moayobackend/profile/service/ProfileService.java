@@ -81,6 +81,7 @@ public class ProfileService {
 
         List<InterestTagResponse> tags = userInterestTagService.findMine(targetUserId);
         List<ProfileIndexItemResponse> items = profileIndexItemService.findMine(targetUserId);
+        List<ProfileDocumentResponse> docs = profileDocumentService.list(targetUserId);
 
         return new ProfileUserResponse(
                 user.getId(),
@@ -92,7 +93,8 @@ public class ProfileService {
                 profile.getMajor(),
                 profile.getBio(),
                 tags,
-                items
+                items,
+                docs
         );
     }
 

@@ -17,5 +17,6 @@ public record ProfileUserResponse(
         String major,
         String bio,
         List<InterestTagResponse> interestTags,
-        List<ProfileIndexItemResponse> indexItems
+        List<ProfileIndexItemResponse> indexItems,
+        List<ProfileDocumentResponse> documents
 ) {}
