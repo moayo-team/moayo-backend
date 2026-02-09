@@ -12,7 +12,6 @@ public enum ChatErrorCode implements BaseErrorCode {
     // 400 BAD REQUEST
     CHAT_USER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "CHAT_ROOM400_1", "채팅 참여자 ID가 필요합니다."),
     CHAT_CANNOT_CHAT_WITH_SELF(HttpStatus.BAD_REQUEST, "CHAT_ROOM400_2", "자기 자신과는 채팅을 생성할 수 없습니다."),
-    CHAT_ORIGIN_POST_ID_REQUIRED(HttpStatus.BAD_REQUEST, "CHAT_ROOM400_3", "채팅 생성 시 기준 게시글 ID가 필요합니다."),
 
     // 403 FORBIDDEN
     CHAT_ROOM_FORBIDDEN(
