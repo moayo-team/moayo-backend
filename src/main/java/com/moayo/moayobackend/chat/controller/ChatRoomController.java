@@ -31,8 +31,7 @@ public class ChatRoomController {
     ) {
         Long roomId = chatRoomService.getOrCreateRoom(
                 userId,
-                request.getUserBId(),
-                request.getOriginPostId()
+                request.getUserBId()
         );
 
         return ResponseEntity.ok(

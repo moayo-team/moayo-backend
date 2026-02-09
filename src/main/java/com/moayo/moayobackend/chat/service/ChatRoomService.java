@@ -26,7 +26,7 @@ public class ChatRoomService {
     private final MessageRepository messageRepository;
 
     @Transactional // user A와 user B 사이의 채팅방 id 반환 (없으면 방을 생성해 반환)
-    public Long getOrCreateRoom(Long userAId, Long userBId, Long originPostId) {
+    public Long getOrCreateRoom(Long userAId, Long userBId) {
 
         if (userAId == null || userBId == null) { // 둘의 id 검증
             throw new ChatException(ChatErrorCode.CHAT_USER_ID_REQUIRED);
@@ -36,9 +36,6 @@ public class ChatRoomService {
             throw new ChatException(ChatErrorCode.CHAT_CANNOT_CHAT_WITH_SELF);
         }
 
-        if (originPostId == null) { // 채팅을 시작한 게시글
-            throw new ChatException(ChatErrorCode.CHAT_ORIGIN_POST_ID_REQUIRED);
-        }
         // user A와 user B에 대한 채팅방이 있는지 검증 (room_key 이용)
         Long small = Math.min(userAId, userBId);
         Long big = Math.max(userAId, userBId);
@@ -46,13 +43,12 @@ public class ChatRoomService {
 
         return chatRoomRepository.findByRoomKey(roomKey)
                 .map(ChatRoom::getId)
-                .orElseGet(() -> createRoom(roomKey, originPostId, userAId, userBId));
+                .orElseGet(() -> createRoom(roomKey, userAId, userBId));
     }
 
     // 채팅방 생성
     private Long createRoom(
             String roomKey,
-            Long originPostId,
             Long userAId,
             Long userBId
     ) {
@@ -60,7 +56,6 @@ public class ChatRoomService {
             ChatRoom room = chatRoomRepository.save(
                     ChatRoom.builder()
                             .roomKey(roomKey)
-                            .originPostId(originPostId)
                             .build()
             );
 
