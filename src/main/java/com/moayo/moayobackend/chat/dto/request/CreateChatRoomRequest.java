@@ -7,5 +7,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateChatRoomRequest {
     private Long userBId;
-    private Long originPostId;
 }
