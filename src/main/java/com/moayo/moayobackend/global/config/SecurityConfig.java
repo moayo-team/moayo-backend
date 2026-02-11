@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(java.util.List.of("http://localhost:5173", "http://15.164.218.67.nip.io"));
+                    corsConfiguration.setAllowedOrigins(java.util.List.of("http://localhost:5173", "http://3.34.183.233.nip.io" , "https://moayo-frontend-soeun0127s-projects.vercel.app"));
                     corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH","DELETE", "OPTIONS"));
                     corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
                     corsConfiguration.setAllowCredentials(true);
