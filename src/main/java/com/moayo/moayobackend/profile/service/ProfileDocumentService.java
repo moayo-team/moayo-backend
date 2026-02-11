@@ -40,7 +40,7 @@ public class ProfileDocumentService {
             "image/webp"
     );
 
-    @Value("${app.upload.dir:uploads}")
+    @Value("${app.upload.dir:/uploads/}")
     private String uploadDir;
 
     private final ProfileRepository profileRepository;

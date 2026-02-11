@@ -7,8 +7,8 @@ import org.springframework.test.context.TestPropertySource;
 
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "ai.recommend.api-key=test-key",
-        "ai.recommend.base-url=http://localhost:8080"
+        "ai.openai.api-key=test-key",
+        "ai.openai.base-url=http://localhost:8080"
 })
 @SpringBootTest
 class MoayoBackendApplicationTests {
