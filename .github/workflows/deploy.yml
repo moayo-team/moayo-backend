@@ -48,5 +48,7 @@ jobs:
               -e COOKIE_SECURE="true" \
               -e AI_OLLAMA_BASE_URL="http://localhost:11434" \
               -e AI_OLLAMA_MODEL="qwen2.5:1.5b" \
-              ${{ secrets.DOCKER_USERNAME }}
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              -e OPENAI_BASE_URL="https://api.openai.com/v1" \
+              -e OPENAI_MODEL="gpt-4o-mini" \
               baesuhyun/moayo
