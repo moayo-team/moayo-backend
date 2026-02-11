@@ -8,8 +8,6 @@ import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceDetailResponse;
 import com.moayo.moayobackend.experience.dto.response.ExperienceSummaryResponse;
 import com.moayo.moayobackend.experience.entity.Experience;
-import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
-import com.moayo.moayobackend.experience.repository.ExperienceLinkRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,8 +21,6 @@ public class ExperienceService {
 
     private final ExperienceRepository experienceRepository;
     private final AiServerClient aiServerClient;
-    private final ExperienceFileRepository experienceFileRepository;
-    private final ExperienceLinkRepository experienceLinkRepository;
 
     @Transactional(readOnly = true)
     public List<ExperienceSummaryResponse> listMyExperiences(Long userId) {
@@ -131,7 +127,6 @@ public class ExperienceService {
         e.changeVisibility(req.visible());
     }
 
-    // 타인(프로필) 공개 이력 조회
     @Transactional(readOnly = true)
     public List<ExperienceSummaryResponse> listPublicByUser(Long userId) {
         return experienceRepository.findAllByUserIdAndVisibleTrueOrderByCreatedAtDesc(userId).stream()
@@ -150,65 +145,55 @@ public class ExperienceService {
     }
 
     @Transactional(readOnly = true)
-    public ExperienceAiDraftResponse draftWithAi(Long userId, Long experienceId, ExperienceAiDraftRequest req) {
-        Experience e = experienceRepository.findById(experienceId)
-                .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
-        e.validateOwner(userId);
+    public ExperienceAiDraftResponse draftWithAi(ExperienceAiDraftRequest req) {
+        String prompt = buildSummaryPrompt(req);
 
-        // 첨부파일, 링크를 context로 합쳐 AI 품질 올리기
-        var files = experienceFileRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
-        var links = experienceLinkRepository.findAllByExperience_IdOrderByCreatedAtDesc(experienceId);
-
-        String context = buildContext(e, files, links);
-        String prompt = (req == null || req.prompt() == null) ? "" : req.prompt();
-
-        // 여기서만 AI 서버 호출, 그리고 결과를 그대로 반환(저장 X)
-        return aiServerClient.generateExperienceDraft(prompt, context);
+        String summary = aiServerClient.generateExperienceDraftText(prompt);
+        return new ExperienceAiDraftResponse(summary);
     }
 
-    private String buildContext(Experience e,
-                                List<com.moayo.moayobackend.experience.entity.ExperienceFile> files,
-                                List<com.moayo.moayobackend.experience.entity.ExperienceLink> links) {
+    private String buildSummaryPrompt(ExperienceAiDraftRequest req) {
+        String title = safe(req.title());
+        String org = safe(req.organization());
+        String start = safe(req.startDate());
+        String end = safe(req.endDate());
+        String participation = safe(req.participationType());
+        String role = safe(req.role());
+        String userDraft = safe(req.draftText());
 
-        String filePart = files.stream()
-                .limit(5)
-                .map(f -> "- " + safe(f.getFileName()) + " (fileId=" + f.getFileId() + ")")
-                .reduce("", (a, b) -> a + "\n" + b);
-
-        String linkPart = links.stream()
-                .limit(5)
-                .map(l -> "- " + safe(l.getTitle()) + " : " + safe(l.getUrl()))
-                .reduce("", (a, b) -> a + "\n" + b);
+        String period = end.isBlank() ? start : (start + " ~ " + end);
 
         return """
-        [Existing Experience]
-        organization=%s
-        title=%s
-        activity=%s
-        role=%s
-        summary=%s
-        startDate=%s
-        endDate=%s
+        너는 채용 담당자가 읽기 좋은 "활동 소개" 문장을 작성하는 전문가야.
 
-        [Attached Files]
+        아래 정보를 바탕으로 "활동 소개(summary)"를 한국어로 자연스럽게 작성해줘.
+        - 과장하지 말고 입력된 사실에 기반해서 정제
+        - 3~5문장 정도의 자연스러운 줄글
+        - 기술/역할/성과가 드러나게 (없으면 억지로 만들지 말기)
+        - 특정 수치/성과는 사용자가 말한 것만 사용
+        - 출력은 오직 활동 소개 본문만(제목/불릿/머리말/따옴표/이모지 금지)
+
+        [활동명]
         %s
 
-        [Attached Links]
+        [주최/기관]
         %s
-        """.formatted(
-                safe(e.getOrganization()),
-                safe(e.getTitle()),
-                safe(e.getActivity()),
-                safe(e.getRole()),
-                safe(e.getSummary()),
-                e.getStartDate(),
-                e.getEndDate(),
-                filePart.isBlank() ? "(none)" : filePart,
-                linkPart.isBlank() ? "(none)" : linkPart
-        );
+
+        [기간]
+        %s
+
+        [참여형태]
+        %s
+
+        [역할]
+        %s
+
+        [사용자 작성 내용]
+        %s
+        """.formatted(title, org, period, participation, role, userDraft);
     }
 
     private String safe(String v) {
-        return v == null ? "" : v;
+        return v == null ? "" : v.trim();
     }
 }
