@@ -21,7 +21,7 @@ public class ExperienceAttachmentController {
 
     private final ExperienceAttachmentService attachmentService;
 
-    @Operation(summary = "이력서 파일 첨부 추가", description = "업로드된 파일을 이력서 항목에 연결합니다.")
+    @Operation(summary = "이력서 첨부 파일 추가", description = "업로드된 파일을 이력서 항목에 연결합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> attachFile(
             @AuthenticationPrincipal Long userId,
