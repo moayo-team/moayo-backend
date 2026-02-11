@@ -15,7 +15,8 @@ public class CorsConfig {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://moayo-frontend-soeun0127s-projects.vercel.app"
+                "https://moayo-frontend-soeun0127s-projects.vercel.app",
+                "https://moayo-backend.p-e.kr"
         ));
         c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization","Content-Type"));

@@ -37,7 +37,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")
-                .setAllowedOriginPatterns("http://localhost:5173", "https://moayo-frontend-soeun0127s-projects.vercel.app")
+                .setAllowedOriginPatterns("http://localhost:5173", "https://moayo-frontend-soeun0127s-projects.vercel.app", "https://moayo-backend.p-e.kr")
                 .withSockJS();
     }
 

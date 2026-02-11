@@ -24,7 +24,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173", "https://moayo-frontend-soeun0127s-projects.vercel.app")
+                .allowedOrigins("http://localhost:5173", "https://moayo-frontend-soeun0127s-projects.vercel.app", "https://moayo-backend.p-e.kr")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
