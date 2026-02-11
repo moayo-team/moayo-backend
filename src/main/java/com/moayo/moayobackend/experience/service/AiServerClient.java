@@ -1,15 +1,16 @@
 package com.moayo.moayobackend.experience.service;
 
+import com.moayo.moayobackend.experience.ai.OllamaClient;
 import com.moayo.moayobackend.experience.dto.response.ExperienceAiDraftResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 
 import java.time.Duration;
 
@@ -18,11 +19,18 @@ import java.time.Duration;
 public class AiServerClient {
 
     private final WebClient webClient;
+    private final OllamaClient ollamaClient;
+
+    @Value("${ai.openai.enabled:true}")
+    private boolean openAiEnabled;
 
     public AiServerClient(
-            @Value("${ai.openai.base-url}") String baseUrl,
-            @Value("${ai.openai.api-key:}") String apiKey
+            @Value("${ai.openai.base-url:http://localhost:8000}") String baseUrl,
+            @Value("${ai.openai.api-key:}") String apiKey,
+            OllamaClient ollamaClient
     ) {
+        this.ollamaClient = ollamaClient;
+
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(15));
 
@@ -36,6 +44,16 @@ public class AiServerClient {
         }
 
         this.webClient = builder.build();
+    }
+
+    public String generateExperienceDraftText(String prompt) {
+        if (!openAiEnabled) {
+            return ollamaClient.generate(prompt);
+        }
+
+        // 기존 AI 서버 방식 유지
+        ExperienceAiDraftResponse res = generateExperienceDraft(prompt, "");
+        return (res == null || res.draft() == null) ? "" : res.draft();
     }
 
     public ExperienceAiDraftResponse generateExperienceDraft(String prompt, String context) {
