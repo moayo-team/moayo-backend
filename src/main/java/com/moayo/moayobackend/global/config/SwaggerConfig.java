@@ -7,6 +7,8 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
@@ -31,6 +33,10 @@ public class SwaggerConfig {
                         .title("Moayo API 명세서")
                         .description("모아요 프로젝트 백엔드 API 문서입니다.")
                         .version("v1.0.0"))
+                .servers(List.of(
+                        new Server().url("https://moayo-backend.p-e.kr").description("운영 서버 (HTTPS)"),
+                        new Server().url("http://localhost:8080").description("로컬 서버 (개발용)")
+                ))
                 .addSecurityItem(securityRequirement)
                 .components(components);
     }
