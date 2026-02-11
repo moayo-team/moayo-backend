@@ -18,3 +18,10 @@ ai:
     base-url: http://localhost:8080
     api-key: test-key
     model: text-embedding-3-small
+
+  openai:
+    enabled: false
+    base-url: http://localhost:11434
+    api-key: dummy
+    model: text-embedding-3-small
+    timeout-ms: 20000

@@ -110,16 +110,18 @@ public class ExperienceController {
         );
     }
 
-    @Operation(summary = "AI 기반 이력서 문구 초안 생성", description = "선택한 이력서 항목과 첨부 정보를 기반으로 AI가 이력서 문구 초안을 생성합니다.")
-    @PostMapping("/{experienceId}/ai/draft")
-    public ResponseEntity<ApiResponse<ExperienceAiDraftResponse>> draftWithAi(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable Long experienceId,
-            @RequestBody(required = false) ExperienceAiDraftRequest req
+    @Operation(
+            summary = "AI 기반 활동 소개(summary) 생성",
+            description = "사용자가 입력한 팩트 정보와 줄글을 바탕으로 활동 소개(summary)를 AI가 생성합니다. (저장 X)"
+    )
+    @PostMapping("/ai/summary")
+    public ResponseEntity<ApiResponse<ExperienceAiDraftResponse>> aiSummary(
+            @RequestBody ExperienceAiDraftRequest req
     ) {
-        var result = experienceService.draftWithAi(userId, experienceId, req);
+        var result = experienceService.draftWithAi(req);
+
         return ResponseEntity.ok(
-                ApiResponse.ok("SUCCESS-200", "AI draft 생성 성공", result)
+                ApiResponse.ok("SUCCESS-200", "AI 활동 소개 생성 성공", result)
         );
     }
 }
