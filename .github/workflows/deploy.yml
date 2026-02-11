@@ -35,7 +35,7 @@ jobs:
             set -e
             sudo docker rm -f moayo-server || true
             sudo docker pull baesuhyun/moayo
-            sudo docker run -d -p 8080:8080 --name moayo-server \
+            sudo docker run -d --network host --name moayo-server \
               -v /home/ubuntu/moayo_uploads:/uploads \
               -e DB_URL="${{ secrets.DB_URL }}" \
               -e DB_USER="${{ secrets.DB_USER }}" \
@@ -43,10 +43,9 @@ jobs:
               -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              -e OPENAI_BASE_URL="https://api.openai.com/v1" \
-              -e OPENAI_MODEL="gpt-4.1-mini" \
               -e GOOGLE_REDIRECT_URI="https://moayo-backend.p-e.kr/api/v1/auth/oauth/google/callback" \
               -e FRONT_REDIRECT_URL="${{ secrets.FRONT_REDIRECT_URL }}" \
               -e COOKIE_SECURE="true" \
+              -e AI_OLLAMA_BASE_URL="http://localhost:11434" -e AI_OLLAMA_MODEL="qwen2.5:1.5b" \
+              ${{ secrets.DOCKER_USERNAME }}
               baesuhyun/moayo
