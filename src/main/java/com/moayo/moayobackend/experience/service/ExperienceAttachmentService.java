@@ -6,6 +6,7 @@ import com.moayo.moayobackend.experience.entity.Experience;
 import com.moayo.moayobackend.experience.entity.ExperienceFile;
 import com.moayo.moayobackend.experience.repository.ExperienceFileRepository;
 import com.moayo.moayobackend.experience.repository.ExperienceRepository;
+import com.moayo.moayobackend.global.file.repository.UploadedFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class ExperienceAttachmentService {
 
     private final ExperienceRepository experienceRepository;
     private final ExperienceFileRepository fileRepository;
+    private final UploadedFileRepository uploadedFileRepository;
 
     @Transactional
     public void attachFile(Long userId, Long experienceId, AttachFileRequest req) {
@@ -27,6 +29,10 @@ public class ExperienceAttachmentService {
 
         if (req == null || req.fileId() == null) {
             throw new IllegalArgumentException("fileId is required");
+        }
+
+        if (!uploadedFileRepository.existsById(req.fileId())) {
+            throw new IllegalArgumentException("Uploaded file not found: fileId=" + req.fileId());
         }
 
         boolean exists = fileRepository.existsByExperience_IdAndFileId(experienceId, req.fileId());
