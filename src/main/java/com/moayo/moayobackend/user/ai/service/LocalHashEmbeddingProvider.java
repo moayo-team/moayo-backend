@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Service
-@Primary
+//@Primary
 public class LocalHashEmbeddingProvider implements EmbeddingProvider {
 
     private static final int DIM = 128;

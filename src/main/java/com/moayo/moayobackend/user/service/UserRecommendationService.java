@@ -117,7 +117,8 @@ public class UserRecommendationService {
                             me,
                             target,
                             snapshotCache.get(me.getId()),
-                            snapshotCache.get(target.getId())
+                            snapshotCache.get(target.getId()),
+                            type
                     );
 
                     return RecommendedUserDto.builder()
@@ -159,13 +160,13 @@ public class UserRecommendationService {
     }
 
     private UserEmbedding upsertEmbedding(Long userId, String snapshotText) {
-        List<Double> vec = embeddingProvider.embed(snapshotText);
+        List<Double> vec;
 
         try {
             vec = embeddingProvider.embed(snapshotText);
         } catch (Exception e) {
-            System.out.println("AI 연결 실패(충전/주소 오류) - 더미 데이터를 사용합니다: {}" + e.getMessage());
-            vec = new ArrayList<>(Collections.nCopies(1536, 0.0));
+            System.out.println("AI 임베딩 생성 실패 (유저 ID: " + userId + ")\n 에러 내용 : " + e.getMessage());
+            vec = new ArrayList<>(Collections.nCopies(embeddingProvider.dimension(), 0.0));
         }
 
         String json = SimilarityUtils.toJson(vec);
