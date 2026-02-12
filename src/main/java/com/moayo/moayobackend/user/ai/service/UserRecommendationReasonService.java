@@ -138,7 +138,7 @@ public class UserRecommendationReasonService {
             );
 
             return webClient.post()
-                    .uri("/v1/chat/completions")
+                    .uri("v1/chat/completions")
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
