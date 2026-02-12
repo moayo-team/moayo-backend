@@ -50,18 +50,19 @@ public class UserRecommendationReasonService {
 
     /**
      * 추천 사유 생성 메인 로직
+     * @param type 프론트에서 넘어온 추천 타입 ("similar" 또는 "synergy")
      */
-    public String getMatchReason(User me, User target, String mySnapshot, String targetSnapshot) {
+    public String getMatchReason(User me, User target, String mySnapshot, String targetSnapshot, String type) {
         // 1. 각 유저의 관심 태그 이름 리스트 조회
         List<String> myTagNames = getTagNamesByUserId(me.getId());
         List<String> targetTagNames = getTagNamesByUserId(target.getId());
 
-        // 2. JobTag 추출 (JobTagExtractor 활용)
+        // 2. JobTag 추출
         Set<JobTag> myJobs = jobTagExtractor.extract(myTagNames, mySnapshot, interestTagMapper);
         Set<JobTag> targetJobs = jobTagExtractor.extract(targetTagNames, targetSnapshot, interestTagMapper);
 
         // 3. 시너지 매칭 확인 (SynergyMatrix 활용)
-        if (synergyMatrix.synergyScore(myJobs, targetJobs) >= 0.5) {
+        if (synergyMatrix.synergyScore(myJobs, targetJobs) >= 0.7) {
             String targetJobName = getKoreanJobName(targetJobs);
             return String.format("%s 분야 역량을 보유하여 %s님과 협업 시너지가 기대되는 유저입니다.", targetJobName, me.getName());
         }
@@ -86,7 +87,7 @@ public class UserRecommendationReasonService {
         }
 
         // 5. 데이터로 설명이 안 될 경우 AI 요약 호출 (OpenAI)
-        return fetchAiReason(mySnapshot, targetSnapshot);
+        return fetchAiReason(mySnapshot, targetSnapshot, type);
     }
 
     private List<String> getTagNamesByUserId(Long userId) {
@@ -113,25 +114,35 @@ public class UserRecommendationReasonService {
         };
     }
 
-    private String fetchAiReason(String mySnapshot, String targetSnapshot) {
+    private String fetchAiReason(String mySnapshot, String targetSnapshot, String type) {
         try {
-            // OpenAI Chat Completion 규격에 맞춘 요청 객체
+            // 타입에 따른 페르소나 설정
+            String persona = type.equals("synergy")
+                    ? "비즈니스 파트너 매칭 전문가"
+                    : "커리어 네트워킹 가이드";
+
+            String goal = type.equals("synergy")
+                    ? "서로 다른 강점이 어떻게 보완될지 강조하세요."
+                    : "비슷한 고민이나 관심사를 가진 동료임을 강조하세요.";
+
             Map<String, Object> requestBody = Map.of(
-                    "model", "gpt-4o-mini", // 혹은 사용 가능한 모델명
+                    "model", "gpt-4o-mini",
                     "messages", List.of(
-                            Map.of("role", "system", "content", "당신은 매칭 전문가입니다. 두 유저의 공통점을 한 문장(20자 이내)으로 요약하세요."),
+                            Map.of("role", "system", "content",
+                                    String.format("당신은 %s입니다. 두 유저의 정보를 분석하여 추천 사유를 한 문장(35자 이내)으로 작성하세요. " +
+                                            "조건: 1. %s 2. '~할 것 같아요'나 '~이 기대돼요' 같은 따뜻한 말투 사용 3. 전문용어를 적절히 섞어 신뢰감을 줄 것.", persona, goal)),
                             Map.of("role", "user", "content", "내 정보: " + mySnapshot + "\n상대 정보: " + targetSnapshot)
                     ),
-                    "max_tokens", 50
+                    "max_tokens", 100,
+                    "temperature", 0.8 // 다양성을 위해 랜덤성 부여
             );
 
             return webClient.post()
-                    .uri("v1/chat/completions") // 정확한 OpenAI 엔드포인트로 수정
+                    .uri("/v1/chat/completions")
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .map(response -> {
-                        // 응답 JSON에서 텍스트 추출 (choices[0].message.content)
                         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
                         Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                         return (String) message.get("content");
@@ -139,7 +150,7 @@ public class UserRecommendationReasonService {
                     .block(Duration.ofSeconds(5));
         } catch (Exception e) {
             log.warn("AI 추천 사유 생성 실패: {}", e.getMessage());
-            return "커리어 지향점이 유사하여 추천해 드려요."; // Fallback
+            return "함께 성장할 수 있는 멋진 동료를 찾았어요!"; // Fallback
         }
     }
 

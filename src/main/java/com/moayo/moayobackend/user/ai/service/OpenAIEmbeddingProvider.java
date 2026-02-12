@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
 @Service
-//@Primary
+@Primary
 public class OpenAIEmbeddingProvider implements EmbeddingProvider {
 
     @Value("${ai.openai.api-key}")
