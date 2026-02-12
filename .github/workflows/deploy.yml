@@ -29,14 +29,14 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
+          username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
             sudo docker rm -f moayo-server || true
             sudo docker pull baesuhyun/moayo
             sudo docker run -d --network host --name moayo-server \
-              -v /home/ubuntu/moayo_uploads:/uploads \
+              -v /home/ec2-user/moayo_uploads:/uploads \
               -e DB_URL="${{ secrets.DB_URL }}" \
               -e DB_USER="${{ secrets.DB_USER }}" \
               -e DB_PW="${{ secrets.DB_PW }}" \
