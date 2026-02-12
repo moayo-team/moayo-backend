@@ -24,6 +24,8 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
     private final MessageRepository messageRepository;
+    private final ChatRoomListPushService chatRoomListPushService;
+
 
     @Transactional // user A와 user B 사이의 채팅방 id 반환 (없으면 방을 생성해 반환)
     public Long getOrCreateRoom(Long userAId, Long userBId) {
@@ -120,21 +122,32 @@ public class ChatRoomService {
             throw new ChatException(ChatErrorCode.CHAT_ROOM_FORBIDDEN);
         }
 
-        // 이 방의 마지막 메시지 ID 조회
-        var ids = messageRepository.findLastMessageIdsByRoomId(roomId);
-
-        // 메시지가 하나도 없으면 읽음 처리할 게 없으니 그냥 리턴
-        if (ids.isEmpty()) {
-            return;
+        if (roomId == null) {
+            throw new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND); // 또는 ROOM_ID_REQUIRED 같은 코드
         }
 
-        Long lastMessageId = ids.get(0);
 
-        // 3. 내 참가자 row의 lastMessageId 업데이트
-        chatParticipantRepository.updateLastReadMessage(
-                roomId,
+        var ids = messageRepository.findLastMessageIdsByRoomId(roomId);
+        if (!ids.isEmpty()) {
+            Long lastMessageId = ids.get(0);
+            chatParticipantRepository.updateLastReadMessage(roomId, userId, lastMessageId);
+        }
+
+        ChatRoomListItemProjection row = chatParticipantRepository
+                .findChatRoomListItemByUserIdAndRoomId(userId, roomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 메세지 읽음 반영
+        chatRoomListPushService.push(
                 userId,
-                lastMessageId
+                new ChatRoomListItemResponse(
+                        row.getRoomId(),
+                        row.getOpponentUserId(),
+                        row.getOpponentImageUrl(),
+                        row.getLastMessageContent(),
+                        row.getLastMessageCreatedAt(),
+                        false
+                )
         );
     }
 }
