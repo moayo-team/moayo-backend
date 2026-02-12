@@ -48,6 +48,6 @@ jobs:
               -e COOKIE_SECURE="true" \
               -e AI_OPENAI_ENABLED="true" \
               -e AI_OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              -e AI_OPENAI_BASE_URL="https://api.openai.com/v1" \
+              -e AI_OPENAI_BASE_URL="https://api.openai.com" \
               -e AI_OPENAI_MODEL="gpt-4o-mini" \
               baesuhyun/moayo
