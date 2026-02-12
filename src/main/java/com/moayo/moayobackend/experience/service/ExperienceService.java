@@ -1,5 +1,6 @@
 package com.moayo.moayobackend.experience.service;
 
+import com.moayo.moayobackend.global.ai.OpenAiClient;
 import com.moayo.moayobackend.experience.dto.request.ExperienceAiDraftRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceCreateRequest;
 import com.moayo.moayobackend.experience.dto.request.ExperienceUpdateRequest;
@@ -20,7 +21,7 @@ import java.util.List;
 public class ExperienceService {
 
     private final ExperienceRepository experienceRepository;
-    private final AiServerClient aiServerClient;
+    private final OpenAiClient openAiClient;
 
     @Transactional(readOnly = true)
     public List<ExperienceSummaryResponse> listMyExperiences(Long userId) {
@@ -147,8 +148,7 @@ public class ExperienceService {
     @Transactional(readOnly = true)
     public ExperienceAiDraftResponse draftWithAi(ExperienceAiDraftRequest req) {
         String prompt = buildSummaryPrompt(req);
-
-        String summary = aiServerClient.generateExperienceDraftText(prompt);
+        String summary = openAiClient.draft(prompt);
         return new ExperienceAiDraftResponse(summary);
     }
 
