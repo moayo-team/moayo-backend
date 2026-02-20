@@ -1,2 +1,4 @@
-# moayo-backend
-모아요 백엔드 노션 페이지 : https://bold-grape-354.notion.site/2e6ed750e6be80edacc6d09bb8e8e424?source=copy_link
+<img width="3780" height="11338" alt="최최최종_1" src="https://github.com/user-attachments/assets/f0d4fd62-7210-4dc4-b7cb-51efa8ebb5df" />
+
+
+### 팀원 소개
